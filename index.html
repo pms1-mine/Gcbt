@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>전산직 전공 학습형 CBT</title>
+  <title>전산 cbt</title>
   <!-- Tailwind CSS 로드 -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- PDF.js CDN 로드 (PDF 파일 텍스트 자동 추출용) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -37,8 +39,8 @@
             C
           </div>
           <div>
-            <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">전산직 전공 학습형 CBT</h1>
-            <p class="text-xs text-slate-500">즉시 채점 · 회차 자동 등록 · 풀이 편집 및 백업</p>
+            <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">전산 cbt</h1>
+            <p class="text-xs text-slate-500">즉시 채점 · PDF 자동 등록 · 풀이 편집 및 백업</p>
           </div>
         </div>
 
@@ -272,15 +274,15 @@
   </div>
 
   <!-- =====================================================================
-       문제 추가 / 회차 관리 모달
+       문제 추가 / 회차 관리 모달 (PDF 업로드 + 미리보기/수정 + 회차 관리)
        ===================================================================== -->
-  <div id="addExamModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-8">
+  <div id="addExamModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-6 max-h-[92vh] flex flex-col">
       <!-- 모달 헤더 -->
-      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 shrink-0">
         <div>
           <h3 class="text-base sm:text-lg font-bold text-slate-900">회차별 문제 추가 및 관리</h3>
-          <p class="text-xs text-slate-500 mt-0.5">기출문제 텍스트를 그대로 붙여넣거나 등록된 회차를 삭제할 수 있습니다.</p>
+          <p class="text-xs text-slate-500 mt-0.5">기출문제 PDF 파일을 올리거나 텍스트를 붙여넣으면 문제와 보기를 자동으로 추출합니다.</p>
         </div>
         <button onclick="closeAddModal()" class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-lg font-bold">
           ✕
@@ -288,18 +290,18 @@
       </div>
 
       <!-- 모달 내 탭 전환 -->
-      <div class="flex gap-2 mt-4 border-b border-slate-200 pb-3">
+      <div class="flex gap-2 mt-3 border-b border-slate-200 pb-3 shrink-0">
         <button id="tabBtnPaste" onclick="switchAddModalTab('paste')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white">
-          텍스트 붙여넣기로 일괄 등록
+          PDF 파일 / 텍스트로 등록
         </button>
         <button id="tabBtnManage" onclick="switchAddModalTab('manage')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
           등록된 회차 목록 / 삭제
         </button>
       </div>
 
-      <!-- 탭 1: 텍스트 붙여넣기 자동 파싱 -->
-      <div id="panelPaste" class="mt-4 flex flex-col gap-4">
-        <!-- 메타데이터 입력 (연도, 직렬, 과목) -->
+      <!-- 탭 1: PDF 파일 업로드 / 텍스트 붙여넣기 + 미리보기 검수 -->
+      <div id="panelPaste" class="mt-4 flex flex-col gap-4 overflow-y-auto pr-1">
+        <!-- 1단계: 메타데이터 입력 (연도, 직렬, 과목) -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">출제 연도</label>
@@ -338,48 +340,88 @@
           </div>
         </div>
 
-        <!-- 문제 본문 입력창 -->
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="text-xs font-bold text-slate-700">1) 문제 텍스트 붙여넣기 (번호. 문제내용 / ① ② ③ ④ 형식)</label>
-            <button onclick="fillSamplePasteText()" class="text-[11px] font-semibold text-indigo-600 hover:underline">
-              입력 예시 채우기
-            </button>
-          </div>
-          <textarea
-            id="rawQuestionsInput"
-            rows="7"
-            class="w-full rounded-xl border border-slate-300 p-3 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="PDF나 한글 파일에서 복사한 문제를 그대로 붙여넣으세요.&#10;예시:&#10;1. 다음 중 비대칭키 암호화 알고리즘은?&#10;① AES&#10;② RSA&#10;③ DES&#10;④ ARIA&#10;2. ..."></textarea>
-        </div>
-
-        <!-- 정답 일괄 입력창 -->
-        <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">
-            2) 정답 한 번에 입력 (선택사항 — 나중에 풀면서 수정해도 됩니다)
+        <!-- 2단계: PDF 파일 업로드 영역 (문제 PDF + 정답표 PDF) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- 문제지 PDF 업로드 -->
+          <label class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-indigo-300 bg-indigo-50/40 hover:bg-indigo-50 transition cursor-pointer text-center">
+            <div class="text-indigo-600 font-bold text-xs sm:text-sm flex items-center gap-1.5">
+              <span>📄</span> 문제지 PDF 파일 불러오기
+            </div>
+            <span id="questionPdfFileName" class="text-[11px] text-slate-500 mt-1">
+              클릭하여 기출문제 .pdf 파일 선택 (1단/2단 자동 인식)
+            </span>
+            <input type="file" id="questionPdfInput" accept=".pdf,application/pdf" onchange="handleQuestionPdfUpload(event)" class="hidden" />
           </label>
-          <input
-            type="text"
-            id="rawAnswersInput"
-            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="예: 2, 3, 2, 4, 1  또는  ② ③ ② ④ ①  또는  1:2 2:3 3:2 (공백/쉼표 구분 모두 인식)"
-          />
+
+          <!-- 정답표 PDF 업로드 (선택) -->
+          <label class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-dashed border-emerald-300 bg-emerald-50/40 hover:bg-emerald-50 transition cursor-pointer text-center">
+            <div class="text-emerald-700 font-bold text-xs sm:text-sm flex items-center gap-1.5">
+              <span>✅</span> 정답표 PDF 불러오기 (선택)
+            </div>
+            <span id="answerPdfFileName" class="text-[11px] text-slate-500 mt-1">
+              사이버국가고시센터 정답표 .pdf를 올리면 자동 매핑
+            </span>
+            <input type="file" id="answerPdfInput" accept=".pdf,application/pdf" onchange="handleAnswerPdfUpload(event)" class="hidden" />
+          </label>
         </div>
 
+        <!-- 추출된 원본 텍스트 확인/수정 접이식 또는 텍스트 영역 -->
+        <div class="grid grid-cols-1 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-bold text-slate-700">추출된 문제 텍스트 (직접 붙여넣기 또는 PDF 추출 결과 수정 가능)</label>
+              <button onclick="fillSamplePasteText()" class="text-[11px] font-semibold text-indigo-600 hover:underline">
+                입력 예시 채우기
+              </button>
+            </div>
+            <textarea
+              id="rawQuestionsInput"
+              rows="5"
+              oninput="refreshParsedPreview()"
+              class="w-full rounded-xl border border-slate-300 p-3 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="위에서 문제지 PDF를 불러오거나, 복사한 문제 텍스트(1. 문제내용 ① ... ② ... ③ ... ④ ...)를 붙여넣으세요."></textarea>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">
+              정답 번호 (공백/쉼표 구분 또는 정답표 복사 붙여넣기 — 예: 2, 3, 2, 4, 1 또는 1 ② 2 ③ ...)
+            </label>
+            <input
+              type="text"
+              id="rawAnswersInput"
+              oninput="refreshParsedPreview()"
+              class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="정답표 PDF를 올리면 자동 채워지며, 직접 입력해도 됩니다."
+            />
+          </div>
+        </div>
+
+        <!-- 상태 알림 박스 -->
         <div id="parseFeedback" class="hidden text-xs font-semibold p-3 rounded-xl"></div>
 
-        <div class="flex items-center justify-end gap-2 pt-2">
+        <!-- 3단계: 실시간 파싱 미리보기 및 개별 수정 영역 -->
+        <div id="parsedPreviewSection" class="hidden border border-slate-200 rounded-xl bg-slate-50 p-3.5">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+            <span class="text-xs font-bold text-slate-800">
+              인식된 문제 미리보기 (<span id="previewCountBadge" class="text-indigo-600">0</span>문제) — 등록 전 질문·보기·정답을 바로 고칠 수 있습니다.
+            </span>
+          </div>
+          <div id="parsedPreviewList" class="flex flex-col gap-3 max-h-72 overflow-y-auto pr-1"></div>
+        </div>
+
+        <!-- 하단 등록 버튼 -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 shrink-0">
           <button onclick="closeAddModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">
             닫기
           </button>
-          <button onclick="parseAndAddQuestions()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm">
-            자동 변환 및 CBT에 추가
+          <button onclick="confirmRegisterParsedQuestions()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm">
+            미리보기 문제 CBT에 등록하기
           </button>
         </div>
       </div>
 
       <!-- 탭 2: 등록된 회차 목록 관리 -->
-      <div id="panelManage" class="hidden mt-4">
+      <div id="panelManage" class="hidden mt-4 overflow-y-auto">
         <p class="text-xs text-slate-500 mb-3">현재 브라우저에 저장된 연도·직렬·과목별 문제 묶음입니다. 불필요한 회차만 골라 삭제할 수 있습니다.</p>
         <div id="packListContainer" class="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1"></div>
         <div class="flex justify-end mt-4">
@@ -862,8 +904,15 @@ int main(void) {
     let currentFilteredList = [];
     let currentIndex = 0;
     let isEditingExplanation = false;
+    let draftParsedQuestions = []; // PDF/텍스트 파싱 후 등록 전 검수용 임시 배열
 
     const circleNumbers = ["①", "②", "③", "④"];
+
+    // PDF.js 워커 경로 설정
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
 
     // 초기화 진입점
     window.addEventListener("DOMContentLoaded", () => {
@@ -1289,131 +1338,13 @@ int main(void) {
     }
 
     // =========================================================================
-    // 풀이 편집 / 내 메모 추가 기능
-    // =========================================================================
-    function toggleExplanationEditor() {
-      if (currentFilteredList.length === 0) return;
-      const q = currentFilteredList[currentIndex];
-      isEditingExplanation = !isEditingExplanation;
-
-      if (isEditingExplanation) {
-        const currentText = customExplanations[q.id] !== undefined ? customExplanations[q.id] : (q.explanation || "");
-        const textarea = document.getElementById("explanationTextarea");
-        textarea.value = currentText;
-        renderCurrentQuestion();
-        textarea.focus();
-      } else {
-        renderCurrentQuestion();
-      }
-    }
-
-    function appendNoteTemplate() {
-      const textarea = document.getElementById("explanationTextarea");
-      const prefix = textarea.value.trim() ? "\n\n" : "";
-      textarea.value += `${prefix}────────────────────\n[내 풀이 / 암기팁]\n• `;
-      textarea.focus();
-    }
-
-    function saveExplanationEdit() {
-      if (currentFilteredList.length === 0) return;
-      const q = currentFilteredList[currentIndex];
-      const newText = document.getElementById("explanationTextarea").value.trim();
-
-      if (newText === (q.explanation || "").trim()) {
-        delete customExplanations[q.id];
-      } else {
-        customExplanations[q.id] = newText;
-      }
-
-      saveStateToStorage();
-      isEditingExplanation = false;
-      renderCurrentQuestion();
-      showToast("수정된 풀이가 브라우저에 저장되었습니다.");
-    }
-
-    function cancelExplanationEdit() {
-      isEditingExplanation = false;
-      renderCurrentQuestion();
-    }
-
-    function restoreOriginalExplanation() {
-      if (currentFilteredList.length === 0) return;
-      const q = currentFilteredList[currentIndex];
-      delete customExplanations[q.id];
-      saveStateToStorage();
-      isEditingExplanation = false;
-      renderCurrentQuestion();
-      showToast("기본 해설로 복원되었습니다.");
-    }
-
-    // =========================================================================
-    // 보기 선택, 북마크, 문제 이동
-    // =========================================================================
-    function selectOption(optionNum) {
-      if (currentFilteredList.length === 0) return;
-      const q = currentFilteredList[currentIndex];
-      userAnswers[q.id] = optionNum;
-      isEditingExplanation = false;
-      saveStateToStorage();
-
-      const baseQuestions = getBaseFilteredQuestions();
-      document.getElementById("countAll").textContent = baseQuestions.length;
-      document.getElementById("countUnsolved").textContent = baseQuestions.filter(item => userAnswers[item.id] === undefined).length;
-      document.getElementById("countWrong").textContent = baseQuestions.filter(item => userAnswers[item.id] !== undefined && userAnswers[item.id] !== item.answer).length;
-      document.getElementById("countBookmark").textContent = baseQuestions.filter(item => Boolean(bookmarks[item.id])).length;
-
-      updateStatsPanel(baseQuestions);
-      renderQuestionGrid();
-      renderCurrentQuestion();
-    }
-
-    function resetCurrentQuestion() {
-      if (currentFilteredList.length === 0) return;
-      const q = currentFilteredList[currentIndex];
-      delete userAnswers[q.id];
-      isEditingExplanation = false;
-      saveStateToStorage();
-      applyFiltersAndRender(false);
-    }
-
-    function toggleBookmark() {
-      if (currentFilteredList.length === 0) return;
-      const q = currentFilteredList[currentIndex];
-      if (bookmarks[q.id]) {
-        delete bookmarks[q.id];
-      } else {
-        bookmarks[q.id] = true;
-      }
-      saveStateToStorage();
-      applyFiltersAndRender(false);
-    }
-
-    function moveQuestion(delta) {
-      const nextIdx = currentIndex + delta;
-      if (nextIdx >= 0 && nextIdx < currentFilteredList.length) {
-        currentIndex = nextIdx;
-        isEditingExplanation = false;
-        renderQuestionGrid();
-        renderCurrentQuestion();
-      }
-    }
-
-    function jumpToQuestion(index) {
-      if (index >= 0 && index < currentFilteredList.length) {
-        currentIndex = index;
-        isEditingExplanation = false;
-        renderQuestionGrid();
-        renderCurrentQuestion();
-      }
-    }
-
-    // =========================================================================
-    // 문제 추가 / 회차 관리 모달 및 텍스트 자동 파서
+    // 문제 추가 / 회차 관리 모달 및 PDF · 텍스트 자동 파서
     // =========================================================================
     function openAddModal() {
       document.getElementById("addExamModal").classList.remove("hidden");
       document.getElementById("parseFeedback").classList.add("hidden");
       switchAddModalTab("paste");
+      refreshParsedPreview();
     }
 
     function closeAddModal() {
@@ -1436,6 +1367,214 @@ int main(void) {
       if (!isPaste) renderPackManagerList();
     }
 
+    // PDF 파일에서 1단/2단 레이아웃을 고려하여 읽기 순서대로 텍스트 추출
+    async function extractTextFromPdfFile(file, isAnswerSheet = false) {
+      if (!window.pdfjsLib) {
+        throw new Error("PDF.js 라이브러리가 로드되지 않았습니다. 인터넷 연결을 확인해 주세요.");
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = "";
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.0 });
+        const textContent = await page.getTextContent();
+        const midX = viewport.width / 2;
+
+        // 좌표 정보 정제 (PDF 좌표계는 하단이 Y=0이므로 상단부터 읽으려면 Y 내림차순)
+        const items = textContent.items
+          .filter(item => item.str && item.str.trim().length > 0)
+          .map(item => ({
+            str: item.str,
+            x: item.transform[4],
+            y: item.transform[5],
+            width: item.width || 0
+          }));
+
+        if (items.length === 0) continue;
+
+        // 2단 시험지 여부 판별 (정답표가 아니고, 중앙선을 가로지르는 긴 텍스트가 적으며 좌/우측 칼럼에 고루 분포할 때)
+        let orderedItems = [];
+        if (!isAnswerSheet && viewport.width > 450) {
+          const leftItems = items.filter(it => (it.x + it.width * 0.4) < midX);
+          const rightItems = items.filter(it => (it.x + it.width * 0.4) >= midX);
+          const isTwoColumn = leftItems.length >= 10 && rightItems.length >= 10;
+
+          if (isTwoColumn) {
+            orderedItems = [
+              ...sortPdfItemsReadingOrder(leftItems),
+              ...sortPdfItemsReadingOrder(rightItems)
+            ];
+          } else {
+            orderedItems = sortPdfItemsReadingOrder(items);
+          }
+        } else {
+          orderedItems = sortPdfItemsReadingOrder(items);
+        }
+
+        // 같은 줄(Y 차이 4pt 이내)은 공백으로 이어 붙이고 줄바꿈 처리
+        let pageLines = [];
+        let currentLine = "";
+        let lastY = null;
+
+        orderedItems.forEach(it => {
+          if (lastY === null || Math.abs(it.y - lastY) <= 4.5) {
+            currentLine += (currentLine ? " " : "") + it.str.trim();
+          } else {
+            if (currentLine.trim()) pageLines.push(currentLine.trim());
+            currentLine = it.str.trim();
+          }
+          lastY = it.y;
+        });
+        if (currentLine.trim()) pageLines.push(currentLine.trim());
+
+        fullText += pageLines.join("\n") + "\n\n";
+      }
+
+      return normalizeExtractedPdfText(fullText);
+    }
+
+    function sortPdfItemsReadingOrder(items) {
+      return [...items].sort((a, b) => {
+        if (Math.abs(a.y - b.y) > 4.5) {
+          return b.y - a.y; // 위에서 아래로
+        }
+        return a.x - b.x;   // 왼쪽에서 오른쪽으로
+      });
+    }
+
+    // PDF 추출 텍스트 후처리 (머리글/쪽번호 제거, 보기 기호 줄바꿈 정리)
+    function normalizeExtractedPdfText(raw) {
+      return raw
+        // 시험지 상/하단 흔한 머리글·꼬리글 제거
+        .replace(/^\s*-\s*\d+\s*-\s*$/gm, "")
+        .replace(/^\s*컴퓨터일반\s*$/gm, "")
+        .replace(/^\s*정보보호론\s*$/gm, "")
+        // 한 줄에 붙어 있는 ① ② ③ ④ 앞에 줄바꿈 삽입해 가독성 및 파싱 정확도 향상
+        .replace(/\s*(①|②|③|④)\s*/g, "\n$1 ")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
+
+    // 문제지 PDF 업로드 이벤트 핸들러
+    async function handleQuestionPdfUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const labelEl = document.getElementById("questionPdfFileName");
+      const feedbackEl = document.getElementById("parseFeedback");
+      labelEl.textContent = `분석 중: ${file.name}...`;
+
+      try {
+        // 파일명에서 연도/직렬/과목 자동 힌트 감지 (예: 2024_국가직_정보보호론.pdf)
+        autoDetectMetaFromFileName(file.name);
+
+        const extractedText = await extractTextFromPdfFile(file, false);
+        document.getElementById("rawQuestionsInput").value = extractedText;
+        labelEl.textContent = `불러옴: ${file.name}`;
+
+        refreshParsedPreview();
+
+        feedbackEl.className = "text-xs font-semibold p-3 rounded-xl bg-indigo-50 text-indigo-800 border border-indigo-200";
+        feedbackEl.textContent = `'${file.name}'에서 텍스트를 추출했습니다. 아래 미리보기에서 문제와 정답을 확인 후 등록해 주세요.`;
+        feedbackEl.classList.remove("hidden");
+      } catch (err) {
+        console.error(err);
+        labelEl.textContent = "PDF 분석 실패 (다시 선택해 주세요)";
+        feedbackEl.className = "text-xs font-semibold p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200";
+        feedbackEl.textContent = `PDF 읽기 오류: ${err.message || "텍스트가 없는 스캔(이미지) PDF일 수 있습니다."}`;
+        feedbackEl.classList.remove("hidden");
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    // 정답표 PDF 업로드 이벤트 핸들러
+    async function handleAnswerPdfUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const labelEl = document.getElementById("answerPdfFileName");
+      const feedbackEl = document.getElementById("parseFeedback");
+      labelEl.textContent = `정답 추출 중: ${file.name}...`;
+
+      try {
+        const extractedText = await extractTextFromPdfFile(file, true);
+        const extractedAnswers = parseAnswersFromAnswerSheet(extractedText);
+
+        if (extractedAnswers.length > 0) {
+          document.getElementById("rawAnswersInput").value = extractedAnswers.join(", ");
+          labelEl.textContent = `정답 ${extractedAnswers.length}개 추출 완료 (${file.name})`;
+          refreshParsedPreview();
+
+          feedbackEl.className = "text-xs font-semibold p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200";
+          feedbackEl.textContent = `정답표 PDF에서 총 ${extractedAnswers.length}개의 정답을 추출해 자동 매핑했습니다.`;
+          feedbackEl.classList.remove("hidden");
+        } else {
+          labelEl.textContent = `정답 인식 실패 (${file.name})`;
+          feedbackEl.className = "text-xs font-semibold p-3 rounded-xl bg-amber-50 text-amber-800 border border-amber-200";
+          feedbackEl.textContent = "정답표 PDF에서 번호별 정답 패턴을 찾지 못했습니다. 정답 입력칸에 직접 입력해 주세요.";
+          feedbackEl.classList.remove("hidden");
+        }
+      } catch (err) {
+        console.error(err);
+        labelEl.textContent = "정답 PDF 오류";
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    // 파일명에서 연도·직렬·과목 자동 추론
+    function autoDetectMetaFromFileName(fileName) {
+      const yearMatch = fileName.match(/(201[6-9]|202[0-6])/);
+      if (yearMatch) document.getElementById("inputYear").value = yearMatch[1];
+
+      if (fileName.includes("국가")) document.getElementById("inputExam").value = "국가직";
+      else if (fileName.includes("지방")) document.getElementById("inputExam").value = "지방직";
+      else if (fileName.includes("군무")) document.getElementById("inputExam").value = "군무원";
+
+      if (fileName.includes("정보보호")) document.getElementById("inputSubject").value = "정보보호론";
+      else if (fileName.includes("컴퓨터")) document.getElementById("inputSubject").value = "컴퓨터일반";
+      else if (fileName.includes("시스템보안")) document.getElementById("inputSubject").value = "정보시스템보안";
+      else if (fileName.includes("자료구조")) document.getElementById("inputSubject").value = "자료구조론";
+    }
+
+    // 정답표 PDF 텍스트에서 문제번호(1~25)에 대응하는 정답(1~4 또는 ①~④) 추출
+    function parseAnswersFromAnswerSheet(text) {
+      const circleMap = { "①": 1, "②": 2, "③": 3, "④": 4 };
+      // 패턴 1: "1 ②" 또는 "1. 2" 또는 "01 ③" 형태 쌍 추출
+      const pairRegex = /(?:^|\s)(\d{1,2})\s*[\.\):]?\s*([1-4①-④])(?=\s|$)/g;
+      const pairs = [];
+      let match;
+      while ((match = pairRegex.exec(text)) !== null) {
+        const qNo = parseInt(match[1], 10);
+        const ansVal = circleMap[match[2]] || parseInt(match[2], 10);
+        if (qNo >= 1 && qNo <= 40 && ansVal >= 1 && ansVal <= 4) {
+          pairs.push({ qNo, ansVal });
+        }
+      }
+
+      if (pairs.length >= 5) {
+        pairs.sort((a, b) => a.qNo - b.qNo);
+        // 중복 번호 제거 (첫 번째 과목 기준)
+        const map = new Map();
+        pairs.forEach(p => {
+          if (!map.has(p.qNo)) map.set(p.qNo, p.ansVal);
+        });
+        return Array.from(map.values());
+      }
+
+      // 패턴 2: 원문자만 나열된 경우
+      const circles = text.match(/[①-④]/g);
+      if (circles && circles.length > 0) {
+        return circles.map(c => circleMap[c]);
+      }
+
+      return [];
+    }
+
     function fillSamplePasteText() {
       document.getElementById("inputYear").value = "2025";
       document.getElementById("inputExam").value = "국가직";
@@ -1453,25 +1592,23 @@ int main(void) {
 ③ 강한 충돌 저항성(Strong collision resistance)
 ④ 가역성(Reversibility)`;
       document.getElementById("rawAnswersInput").value = "2, 4";
+      refreshParsedPreview();
     }
 
-    // 붙여넣은 텍스트를 자동으로 문제 객체 배열로 파싱
-    function parseAndAddQuestions() {
-      const year = document.getElementById("inputYear").value;
-      const exam = document.getElementById("inputExam").value;
-      const subject = document.getElementById("inputSubject").value;
+    // 입력된 텍스트와 정답을 실시간 파싱해 미리보기 카드 렌더링
+    function refreshParsedPreview() {
       const rawText = document.getElementById("rawQuestionsInput").value.trim();
       const rawAnswers = document.getElementById("rawAnswersInput").value.trim();
-      const feedbackEl = document.getElementById("parseFeedback");
+      const previewSection = document.getElementById("parsedPreviewSection");
+      const previewList = document.getElementById("parsedPreviewList");
+      const countBadge = document.getElementById("previewCountBadge");
 
       if (!rawText) {
-        feedbackEl.className = "text-xs font-semibold p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200";
-        feedbackEl.textContent = "문제 텍스트를 먼저 붙여넣어 주세요.";
-        feedbackEl.classList.remove("hidden");
+        draftParsedQuestions = [];
+        previewSection.classList.add("hidden");
         return;
       }
 
-      // 정답 파싱 (숫자 1~4 또는 ①~④ 추출)
       const parsedAnswers = parseAnswersString(rawAnswers);
 
       // 문제 분리: 줄 시작 부분의 "1." 또는 "01." 또는 "1)" 패턴 기준
@@ -1481,16 +1618,13 @@ int main(void) {
         .map(b => b.trim())
         .filter(Boolean);
 
-      const newItems = [];
-      let nextId = questions.reduce((max, q) => Math.max(max, q.id), 0) + 1;
+      const parsedItems = [];
 
       blocks.forEach((block, idx) => {
-        // 번호 추출
         const numMatch = block.match(/^(\d{1,2})\s*[\.\)]\s*/);
         const qNum = numMatch ? parseInt(numMatch[1], 10) : (idx + 1);
         const bodyWithoutNum = block.replace(/^(\d{1,2})\s*[\.\)]\s*/, "").trim();
 
-        // ① ② ③ ④ 위치 탐색
         const opt1Idx = bodyWithoutNum.indexOf("①");
         const opt2Idx = bodyWithoutNum.indexOf("②");
         const opt3Idx = bodyWithoutNum.indexOf("③");
@@ -1498,41 +1632,218 @@ int main(void) {
 
         if (opt1Idx !== -1 && opt2Idx !== -1 && opt3Idx !== -1 && opt4Idx !== -1) {
           const fullStem = bodyWithoutNum.slice(0, opt1Idx).trim();
-          const opt1 = bodyWithoutNum.slice(opt1Idx + 1, opt2Idx).trim();
-          const opt2 = bodyWithoutNum.slice(opt2Idx + 1, opt3Idx).trim();
-          const opt3 = bodyWithoutNum.slice(opt3Idx + 1, opt4Idx).trim();
-          const opt4 = bodyWithoutNum.slice(opt4Idx + 1).trim();
+          const opt1 = bodyWithoutNum.slice(opt1Idx + 1, opt2Idx).replace(/\s+/g, " ").trim();
+          const opt2 = bodyWithoutNum.slice(opt2Idx + 1, opt3Idx).replace(/\s+/g, " ").trim();
+          const opt3 = bodyWithoutNum.slice(opt3Idx + 1, opt4Idx).replace(/\s+/g, " ").trim();
+          const opt4 = bodyWithoutNum.slice(opt4Idx + 1).replace(/\s+/g, " ").trim();
 
-          // 지문 첫 줄은 질문, 나머지 줄(코드/보기 등)이 길면 box로 분리
           const stemLines = fullStem.split("\n");
           const mainQuestion = stemLines[0].trim();
           const extraText = stemLines.slice(1).join("\n").trim();
 
-          const ans = parsedAnswers[idx] || 1;
+          // 문제번호(qNum) 기준 매핑 우선, 없으면 순서(idx) 기준 매핑
+          const mappedAns = parsedAnswers[qNum - 1] || parsedAnswers[idx] || 1;
+          const hasExplicitAns = Boolean(parsedAnswers[qNum - 1] || parsedAnswers[idx]);
 
-          newItems.push({
-            id: nextId++,
+          parsedItems.push({
             num: qNum,
-            subject,
-            year,
-            exam,
             question: mainQuestion,
-            codeOrTable: extraText ? { type: "box", content: extraText } : null,
+            extraText,
             options: [opt1, opt2, opt3, opt4],
-            answer: ans,
-            explanation: parsedAnswers[idx]
-              ? `${year}년 ${exam} ${subject} ${qNum}번 기출문제입니다. [풀이 편집] 버튼을 눌러 나만의 해설을 기록해 보세요.`
-              : `정답이 미입력되어 임시로 ①번으로 지정되었습니다. [풀이 편집]에서 정답 해설을 추가해 주세요.`
+            answer: mappedAns,
+            hasExplicitAns
           });
         }
       });
 
-      if (newItems.length === 0) {
+      draftParsedQuestions = parsedItems;
+      countBadge.textContent = parsedItems.length;
+
+      if (parsedItems.length === 0) {
+        previewSection.classList.add("hidden");
+        return;
+      }
+
+      previewSection.classList.remove("hidden");
+      previewList.innerHTML = parsedItems.map((item, idx) => `
+        <div class="bg-white rounded-xl border border-slate-200 p-3 text-xs shadow-2xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span class="font-bold text-indigo-700">${item.num}번 문제</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-500">정답 선택:</span>
+              ${[1, 2, 3, 4].map(ansNum => `
+                <button
+                  type="button"
+                  onclick="updateDraftAnswer(${idx}, ${ansNum})"
+                  class="w-6 h-6 rounded-md font-bold transition ${
+                    item.answer === ansNum
+                      ? "bg-emerald-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }"
+                >
+                  ${circleNumbers[ansNum - 1]}
+                </button>
+              `).join("")}
+              <button
+                type="button"
+                onclick="removeDraftItem(${idx})"
+                class="ml-2 text-rose-500 hover:text-rose-700 font-semibold"
+                title="이 문제 제외"
+              >
+                제외
+              </button>
+            </div>
+          </div>
+
+          <input
+            type="text"
+            value="${escapeHtml(item.question)}"
+            onchange="updateDraftQuestionText(${idx}, this.value)"
+            class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 mb-1.5 focus:outline-none focus:border-indigo-400"
+          />
+
+          ${item.extraText ? `
+            <textarea
+              rows="2"
+              onchange="updateDraftExtraText(${idx}, this.value)"
+              class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-mono text-slate-700 mb-1.5"
+            >${escapeHtml(item.extraText)}</textarea>
+          ` : ""}
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            ${item.options.map((opt, optIdx) => `
+              <div class="flex items-center gap-1">
+                <span class="font-bold text-slate-500">${circleNumbers[optIdx]}</span>
+                <input
+                  type="text"
+                  value="${escapeHtml(opt)}"
+                  onchange="updateDraftOptionText(${idx}, ${optIdx}, this.value)"
+                  class="w-full rounded border border-slate-200 px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-indigo-400"
+                />
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function updateDraftAnswer(idx, ansNum) {
+      if (!draftParsedQuestions[idx]) return;
+      draftParsedQuestions[idx].answer = ansNum;
+      draftParsedQuestions[idx].hasExplicitAns = true;
+      refreshParsedPreviewListOnly();
+    }
+
+    function updateDraftQuestionText(idx, val) {
+      if (draftParsedQuestions[idx]) draftParsedQuestions[idx].question = val.trim();
+    }
+
+    function updateDraftExtraText(idx, val) {
+      if (draftParsedQuestions[idx]) draftParsedQuestions[idx].extraText = val.trim();
+    }
+
+    function updateDraftOptionText(idx, optIdx, val) {
+      if (draftParsedQuestions[idx]) draftParsedQuestions[idx].options[optIdx] = val.trim();
+    }
+
+    function removeDraftItem(idx) {
+      draftParsedQuestions.splice(idx, 1);
+      document.getElementById("previewCountBadge").textContent = draftParsedQuestions.length;
+      if (draftParsedQuestions.length === 0) {
+        document.getElementById("parsedPreviewSection").classList.add("hidden");
+      } else {
+        refreshParsedPreviewListOnly();
+      }
+    }
+
+    function refreshParsedPreviewListOnly() {
+      const previewList = document.getElementById("parsedPreviewList");
+      previewList.innerHTML = draftParsedQuestions.map((item, idx) => `
+        <div class="bg-white rounded-xl border border-slate-200 p-3 text-xs shadow-2xs">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span class="font-bold text-indigo-700">${item.num}번 문제</span>
+            <div class="flex items-center gap-1.5">
+              <span class="text-slate-500">정답 선택:</span>
+              ${[1, 2, 3, 4].map(ansNum => `
+                <button
+                  type="button"
+                  onclick="updateDraftAnswer(${idx}, ${ansNum})"
+                  class="w-6 h-6 rounded-md font-bold transition ${
+                    item.answer === ansNum
+                      ? "bg-emerald-600 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }"
+                >
+                  ${circleNumbers[ansNum - 1]}
+                </button>
+              `).join("")}
+              <button
+                type="button"
+                onclick="removeDraftItem(${idx})"
+                class="ml-2 text-rose-500 hover:text-rose-700 font-semibold"
+              >
+                제외
+              </button>
+            </div>
+          </div>
+          <input
+            type="text"
+            value="${escapeHtml(item.question)}"
+            onchange="updateDraftQuestionText(${idx}, this.value)"
+            class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-800 mb-1.5 focus:outline-none focus:border-indigo-400"
+          />
+          ${item.extraText ? `
+            <textarea
+              rows="2"
+              onchange="updateDraftExtraText(${idx}, this.value)"
+              class="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-mono text-slate-700 mb-1.5"
+            >${escapeHtml(item.extraText)}</textarea>
+          ` : ""}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+            ${item.options.map((opt, optIdx) => `
+              <div class="flex items-center gap-1">
+                <span class="font-bold text-slate-500">${circleNumbers[optIdx]}</span>
+                <input
+                  type="text"
+                  value="${escapeHtml(opt)}"
+                  onchange="updateDraftOptionText(${idx}, ${optIdx}, this.value)"
+                  class="w-full rounded border border-slate-200 px-2 py-1 text-[11px] text-slate-700 focus:outline-none focus:border-indigo-400"
+                />
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // 검수 완료된 미리보기 문제들을 실제 문제 은행에 최종 등록
+    function confirmRegisterParsedQuestions() {
+      const year = document.getElementById("inputYear").value;
+      const exam = document.getElementById("inputExam").value;
+      const subject = document.getElementById("inputSubject").value;
+      const feedbackEl = document.getElementById("parseFeedback");
+
+      if (draftParsedQuestions.length === 0) {
         feedbackEl.className = "text-xs font-semibold p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200";
-        feedbackEl.textContent = "문제를 인식하지 못했습니다. 각 문제가 '1. 문제내용'으로 시작하고 '① ② ③ ④' 보기가 포함되어 있는지 확인해 주세요.";
+        feedbackEl.textContent = "등록할 인식된 문제가 없습니다. PDF 파일을 불러오거나 문제 텍스트를 입력해 주세요.";
         feedbackEl.classList.remove("hidden");
         return;
       }
+
+      let nextId = questions.reduce((max, q) => Math.max(max, q.id), 0) + 1;
+
+      const newItems = draftParsedQuestions.map(item => ({
+        id: nextId++,
+        num: item.num,
+        subject,
+        year,
+        exam,
+        question: item.question,
+        codeOrTable: item.extraText ? { type: "box", content: item.extraText } : null,
+        options: [...item.options],
+        answer: item.answer,
+        explanation: `${year}년 ${exam} ${subject} ${item.num}번 기출문제입니다. [풀이 편집 / 내 메모 추가] 버튼을 눌러 나만의 해설을 기록해 보세요.`
+      }));
 
       questions.push(...newItems);
       saveStateToStorage();
@@ -1547,8 +1858,13 @@ int main(void) {
       updateFilterTabStyles();
       applyFiltersAndRender(true);
 
+      // 입력 상태 초기화
       document.getElementById("rawQuestionsInput").value = "";
       document.getElementById("rawAnswersInput").value = "";
+      document.getElementById("questionPdfFileName").textContent = "클릭하여 기출문제 .pdf 파일 선택 (1단/2단 자동 인식)";
+      document.getElementById("answerPdfFileName").textContent = "사이버국가고시센터 정답표 .pdf를 올리면 자동 매핑";
+      draftParsedQuestions = [];
+
       closeAddModal();
       showToast(`${year}년 ${exam} ${subject} ${newItems.length}문제가 등록되었습니다!`);
     }
@@ -1557,7 +1873,6 @@ int main(void) {
     function parseAnswersString(str) {
       if (!str) return [];
       const circleMap = { "①": 1, "②": 2, "③": 3, "④": 4 };
-      // "1:2" 또는 "1-2" 형태에서 앞의 문제번호 제거
       const cleaned = str.replace(/\d{1,2}\s*[:\-\)\.]\s*(?=[1-4①-④])/g, " ");
       const tokens = cleaned.match(/[1-4①-④]/g) || [];
       return tokens.map(t => circleMap[t] || parseInt(t, 10));
