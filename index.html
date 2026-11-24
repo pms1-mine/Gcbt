@@ -32,6 +32,10 @@ input[type=number]{width:90px}
 .tag b{color:var(--pri)}
 .qn{font-size:22px;font-weight:800;margin:6px 0 4px}
 .qt{font-size:17px;white-space:pre-wrap;margin-bottom:10px}
+.dd{margin-top:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg)}
+.dd summary{padding:10px 12px;cursor:pointer;font-weight:600}
+.ddl{max-height:220px;overflow:auto;padding:2px 12px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px}
+.ddl label{display:flex;gap:6px;align-items:center;padding:6px 0}
 .qimg{display:block;max-width:100%;height:auto;margin:6px auto 12px;background:#fff;border-radius:8px;padding:6px}
 .star{background:none;border:0;font-size:26px;color:var(--sub);padding:0 4px}
 .star.on{color:var(--star)}
@@ -156,19 +160,23 @@ const NUM=["①","②","③","④","⑤","⑥"];
 let extra=ld('cbt_extra',[]),wrong=ld('cbt_wrong',{}),bm=ld('cbt_bm',{}),notes=ld('cbt_notes',{});
 let sess=ld('cbt_sess',null),theme=ld('cbt_theme',matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
 let ALL=[],QM={};
-function build(){const m=new Map();[...BASE,...extra].forEach(q=>{q.unit=q.unit||'기타';m.set(q.id,q)});ALL=[...m.values()];QM=Object.fromEntries(ALL.map(q=>[q.id,q]))}
+function build(){const m=new Map();[...BASE,...extra].forEach(q=>{q.unit=q.unit||'기타';const r=q.round||'';q.year=(r.match(/\d{4}/)||['기타'])[0];q.kind=(r.match(/국가직|지방직|서울시|법원직|교육청|경찰/)||['기타'])[0];m.set(q.id,q)});ALL=[...m.values()];QM=Object.fromEntries(ALL.map(q=>[q.id,q]))}
 build();
-let view='home',selSub=null,selUnit=null,src='all',cnt=20,rnd=true,editing=false,navOpen=false;
+let view='home',selSub=null,selUnit=null,selYear='all',selKind='all',unitOpen=false,src='all',cnt=20,rnd=true,editing=false,navOpen=false;
 const SUBJ=['컴퓨터일반','정보보호론'];
 const subjects=()=>[...new Set([...SUBJ,...ALL.map(q=>q.subject)])];
-const units=()=>[...new Set(ALL.filter(q=>selSub.has(q.subject)).map(q=>q.unit))];
+const inBase=q=>selSub.has(q.subject)&&(selYear=='all'||q.year==selYear)&&(selKind=='all'||q.kind==selKind);
+const units=()=>[...new Set(ALL.filter(inBase).map(q=>q.unit))];
+const years=()=>[...new Set(ALL.map(q=>q.year))].sort().reverse();
+const kinds=()=>[...new Set(ALL.map(q=>q.kind))];
+const unitLabel=()=>{if(!selUnit)return '전체';const a=[...selUnit];return a.length<=2?a.join(', '):a[0]+' 외 '+(a.length-1)+'개'};
 const setTheme=()=>document.documentElement.setAttribute('data-theme',theme);
 setTheme();
 const toggleTheme=()=>{theme=theme=='dark'?'light':'dark';sv('cbt_theme',theme);setTheme();render()};
 const saveSess=()=>sv('cbt_sess',sess);
 
 /* ========= 홈 ========= */
-function pool(){return ALL.filter(q=>selSub.has(q.subject)&&(!selUnit||selUnit.has(q.unit))&&(src=='all'||(src=='wrong'&&wrong[q.id])||(src=='bm'&&bm[q.id])))}
+function pool(){return ALL.filter(q=>inBase(q)&&(!selUnit||selUnit.has(q.unit))&&(src=='all'||(src=='wrong'&&wrong[q.id])||(src=='bm'&&bm[q.id])))}
 function home(){
   if(!selSub)selSub=new Set(subjects());
   const subs=subjects(),p=pool().length;
@@ -181,10 +189,19 @@ function home(){
     <button class="chip ${selSub.size==subs.length?'on':''}" onclick="allSub()">전체</button>
     ${subs.map((s,i)=>`<button class="chip ${selSub.has(s)?'on':''}" onclick="togSub(${i})">${esc(s)} (${ALL.filter(q=>q.subject==s).length})</button>`).join('')}
   </div></div>
-  <div class="card"><h3>단원</h3><div class="chips">
-    <button class="chip ${!selUnit?'on':''}" onclick="allUnit()">전체</button>
-    ${units().map((u,i)=>`<button class="chip ${selUnit&&selUnit.has(u)?'on':''}" onclick="togUnit(${i})">${esc(u)} (${ALL.filter(q=>selSub.has(q.subject)&&q.unit==u).length})</button>`).join('')}
-  </div></div>
+  <div class="card"><h3>연도 · 시험 · 단원</h3>
+    <div class="row">
+      <select style="flex:1" onchange="setYear(this.value)"><option value="all">전체 연도</option>${years().map(y=>`<option value="${y}" ${selYear==y?'selected':''}>${y}${y=='기타'?'':'년'}</option>`).join('')}</select>
+      <select style="flex:1" onchange="setKind(this.value)"><option value="all">국가직+지방직 전체</option>${kinds().map(k=>`<option value="${k}" ${selKind==k?'selected':''}>${k}</option>`).join('')}</select>
+    </div>
+    <details class="dd" ${unitOpen?'open':''} ontoggle="unitOpen=this.open">
+      <summary>단원: ${esc(unitLabel())}</summary>
+      <div class="ddl">
+        <label><input type="checkbox" ${!selUnit?'checked':''} onchange="allUnit()"> 전체</label>
+        ${units().map((u,i)=>`<label><input type="checkbox" ${selUnit&&selUnit.has(u)?'checked':''} onchange="togUnit(${i})"> ${esc(u)} <span class="sm">(${ALL.filter(q=>inBase(q)&&q.unit==u).length})</span></label>`).join('')}
+      </div>
+    </details>
+  </div>
   <div class="card"><h3>문제 범위</h3><div class="chips">
     ${[['all','전체'],['wrong',`틀린 문제 (${Object.keys(wrong).filter(i=>QM[i]).length})`],['bm',`북마크 (${Object.keys(bm).filter(i=>QM[i]).length})`]].map(([k,l])=>`<button class="chip ${src==k?'on':''}" onclick="setSrc('${k}')">${l}</button>`).join('')}
   </div></div>
@@ -204,6 +221,8 @@ function home(){
 function togSub(i){const s=subjects()[i];selSub.has(s)?selSub.delete(s):selSub.add(s);if(!selSub.size)selSub.add(s);selUnit=null;render()}
 function togUnit(i){const u=units()[i];if(!selUnit)selUnit=new Set();selUnit.has(u)?selUnit.delete(u):selUnit.add(u);if(!selUnit.size)selUnit=null;render()}
 function allUnit(){selUnit=null;render()}
+function setYear(v){selYear=v;selUnit=null;render()}
+function setKind(v){selKind=v;selUnit=null;render()}
 function allSub(){selSub=new Set(subjects());selUnit=null;render()}
 function setSrc(k){src=k;render()}
 function startNew(){
@@ -290,7 +309,7 @@ function impFile(e){
       if(d.bm){Object.assign(bm,d.bm);sv('cbt_bm',bm)}
       if(d.wrong){Object.assign(wrong,d.wrong);sv('cbt_wrong',wrong)}
       msg+='기록 복원 완료.'}
-    build();selSub=null;selUnit=null;alert(msg||'불러온 내용이 없습니다.');render();
+    build();selSub=null;selUnit=null;selYear='all';selKind='all';alert(msg||'불러온 내용이 없습니다.');render();
   }catch(err){alert('JSON 파일을 읽을 수 없습니다.')}};
   r.readAsText(f);
 }
