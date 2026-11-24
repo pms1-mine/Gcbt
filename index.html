@@ -26,86 +26,86 @@
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
 
   <!-- =====================================================================
-       상단 헤더 영역: 타이틀, 진행 현황 통계, 필터 버튼, 초기화 버튼
+       상단 헤더 영역: 타이틀, 진행 현황 통계, 필터 버튼, 관리/초기화 버튼
        ===================================================================== -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <!-- 좌측 타이틀 및 과목 선택 -->
-      <div class="flex items-center justify-between">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-3">
+      <!-- 1단: 브랜드 타이틀 + 주요 관리 액션 버튼 -->
+      <div class="flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2.5">
           <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
             C
           </div>
           <div>
             <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">전산직 전공 학습형 CBT</h1>
-            <p class="text-xs text-slate-500">클릭 즉시 채점 · 오답/북마크 자동 저장</p>
+            <p class="text-xs text-slate-500">즉시 채점 · 회차 자동 등록 · 풀이 편집 및 백업</p>
           </div>
         </div>
 
-        <!-- 모바일용 과목 필터 -->
-        <select id="subjectFilterMobile" onchange="changeSubjectFilter(this.value)" class="md:hidden text-xs font-medium bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="ALL">전체 과목</option>
-        </select>
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- 문제 추가 / 회차 등록 버튼 -->
+          <button onclick="openAddModal()" class="px-3 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-sm flex items-center gap-1.5">
+            <span>+</span> 문제 추가 / 회차 관리
+          </button>
+
+          <!-- JSON 백업 내보내기 -->
+          <button onclick="exportAllDataJson()" title="추가한 문제와 수정한 풀이를 JSON 파일로 백업" class="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition">
+            백업 저장
+          </button>
+
+          <!-- JSON 파일 불러오기 -->
+          <label class="px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition cursor-pointer">
+            파일 불러오기
+            <input type="file" id="importJsonInput" accept=".json" onchange="importDataJsonFile(event)" class="hidden" />
+          </label>
+
+          <!-- 기록 초기화 버튼 -->
+          <button onclick="openResetModal()" class="px-3 py-2 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition">
+            풀이 기록 초기화
+          </button>
+        </div>
       </div>
 
-      <!-- 우측 필터 및 상태 컨트롤 -->
-      <div class="flex flex-wrap items-center gap-2">
-        <!-- 데스크톱 과목 필터 -->
-        <select id="subjectFilterDesktop" onchange="changeSubjectFilter(this.value)" class="hidden md:block text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-          <option value="ALL">전체 과목</option>
-        </select>
+      <!-- 2단: 연도 / 직렬 / 과목 / 상태 필터 바 -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- 연도 필터 -->
+          <select id="yearFilter" onchange="onFilterChange()" class="text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL">전체 연도</option>
+          </select>
 
-        <!-- 보기 모드 필터 버튼 그룹 -->
+          <!-- 직렬 필터 -->
+          <select id="examFilter" onchange="onFilterChange()" class="text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL">전체 직렬</option>
+          </select>
+
+          <!-- 과목 필터 -->
+          <select id="subjectFilter" onchange="onFilterChange()" class="text-xs font-medium bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL">전체 과목</option>
+          </select>
+        </div>
+
+        <!-- 상태 필터 탭 -->
         <div class="inline-flex rounded-lg bg-slate-100 p-1 border border-slate-200">
-          <button id="btnModeAll" onclick="setFilterMode('all')" class="px-2.5 py-1.5 text-xs font-semibold rounded-md transition bg-white text-indigo-600 shadow-sm">
+          <button id="btnModeAll" onclick="setFilterMode('all')" class="px-2.5 py-1 text-xs font-semibold rounded-md transition bg-white text-indigo-600 shadow-sm">
             전체 (<span id="countAll">0</span>)
           </button>
-          <button id="btnModeWrong" onclick="setFilterMode('wrong')" class="px-2.5 py-1.5 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900">
+          <button id="btnModeUnsolved" onclick="setFilterMode('unsolved')" class="px-2.5 py-1 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900">
+            미풀이 (<span id="countUnsolved">0</span>)
+          </button>
+          <button id="btnModeWrong" onclick="setFilterMode('wrong')" class="px-2.5 py-1 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900">
             오답만 (<span id="countWrong">0</span>)
           </button>
-          <button id="btnModeBookmark" onclick="setFilterMode('bookmark')" class="px-2.5 py-1.5 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900">
+          <button id="btnModeBookmark" onclick="setFilterMode('bookmark')" class="px-2.5 py-1 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900">
             북마크 (<span id="countBookmark">0</span>)
           </button>
         </div>
-
-        <!-- 초기화 확인 트리거 버튼 -->
-        <button onclick="openResetModal()" class="px-3 py-2 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition">
-          기록 초기화
-        </button>
       </div>
     </div>
   </header>
 
-  <!-- =====================================================================
-       메인 컨테이너: 좌측 문제 영역 + 우측 문제 현황 그리드
-       ===================================================================== -->
-  <main class="max-w-6xl w-full mx-auto px-4 py-6 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
-    <!-- 좌측: 현재 문제 카드 (8컬럼) -->
-    <section class="lg:col-span-8 flex flex-col gap-4">
-      <!-- 필터 결과 없음 안내 화면 -->
-      <div id="emptyStateCard" class="hidden bg-white rounded-2xl border border-slate-200 p-10 text-center shadow-sm">
-        <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 text-xl font-bold">
-          !
-        </div>
-        <h2 id="emptyStateTitle" class="text-base font-bold text-slate-800 mb-1">해당하는 문제가 없습니다</h2>
-        <p id="emptyStateDesc" class="text-sm text-slate-500 mb-5">다른 필터를 선택하거나 전체 문제 보기로 돌아가세요.</p>
-        <button onclick="setFilterMode('all')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition">
-          전체 문제 보기
-        </button>
-      </div>
-
-      <!-- 문제 본문 카드 -->
-      <div id="questionCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <!-- 문제 상단 메타 바 -->
-        <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
-          <div class="flex flex-wrap items-center gap-2">
-            <span id="qNumberBadge" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold">
-              문제 1 / 20
-            </span>
-            <span id="qMetaBadge" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-600 text-xs font-medium">
-              컴퓨터일반 · 기출유형
-            </span>
+  <!-- 토스트 알림 배너 -->
+  <div id="toastBanner" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900 text-white text-xs sm:text-sm font-medium px-4 py-3 rounded-xl shadow-lg border border-slate-700 transition-opacity"></div>
             <span id="qStatusBadge" class="hidden px-2.5 py-1 rounded-lg text-xs font-bold"></span>
           </div>
 
@@ -130,18 +130,59 @@
 
           <!-- 즉시 채점 및 상세 해설 박스 (선택 시 표시) -->
           <div id="explanationBox" class="mt-6 hidden rounded-2xl border p-4 sm:p-5 transition-all">
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div class="flex items-center gap-2">
                 <span id="resultIcon" class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"></span>
                 <span id="resultTitle" class="font-bold text-sm sm:text-base"></span>
               </div>
-              <button onclick="resetCurrentQuestion()" class="text-xs font-medium text-slate-500 hover:text-slate-800 underline">
-                이 문제 다시 풀기
-              </button>
+              <div class="flex items-center gap-3">
+                <button id="toggleEditExpBtn" onclick="toggleExplanationEditor()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white/80 px-2.5 py-1 rounded-lg border border-indigo-200 transition">
+                  풀이 편집 / 내 메모 추가
+                </button>
+                <button onclick="resetCurrentQuestion()" class="text-xs font-medium text-slate-500 hover:text-slate-800 underline">
+                  이 문제 다시 풀기
+                </button>
+              </div>
             </div>
-            <div class="mt-2 pt-2.5 border-t border-slate-200/70">
-              <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">핵심 해설</p>
+
+            <!-- 해설 읽기 모드 -->
+            <div id="explanationViewMode" class="mt-2 pt-2.5 border-t border-slate-200/70">
+              <div class="flex items-center gap-2 mb-1">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">핵심 해설 및 내 풀이</p>
+                <span id="editedBadge" class="hidden text-[11px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">편집됨</span>
+              </div>
               <p id="explanationText" class="text-sm text-slate-700 leading-relaxed whitespace-pre-line"></p>
+            </div>
+
+            <!-- 해설 편집 모드 -->
+            <div id="explanationEditMode" class="hidden mt-3 pt-3 border-t border-slate-200/70">
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="explanationTextarea" class="text-xs font-bold text-slate-700">
+                  해설 직접 수정 / 나만의 풀이·암기법 추가
+                </label>
+                <button onclick="appendNoteTemplate()" class="text-[11px] font-semibold text-indigo-600 hover:underline">
+                  + 구분선 및 [내 풀이] 블록 추가
+                </button>
+              </div>
+              <textarea
+                id="explanationTextarea"
+                rows="6"
+                class="w-full rounded-xl border border-slate-300 bg-white p-3 text-sm text-slate-800 leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="기존 풀이를 수정하거나 아래에 나만의 풀이/암기팁을 적어주세요."
+              ></textarea>
+              <div class="mt-2.5 flex items-center justify-between gap-2">
+                <button onclick="restoreOriginalExplanation()" class="text-xs font-medium text-slate-500 hover:text-rose-600 underline">
+                  기본 해설로 복원
+                </button>
+                <div class="flex items-center gap-2">
+                  <button onclick="cancelExplanationEdit()" class="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100">
+                    취소
+                  </button>
+                  <button onclick="saveExplanationEdit()" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 shadow-sm">
+                    풀이 저장
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -215,17 +256,137 @@
        ===================================================================== -->
   <div id="resetModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200">
-      <h3 class="text-base font-bold text-slate-900 mb-2">학습 기록을 초기화할까요?</h3>
+      <h3 class="text-base font-bold text-slate-900 mb-2">풀이 기록을 초기화할까요?</h3>
       <p class="text-sm text-slate-600 mb-5 leading-relaxed">
-        저장된 모든 풀이 내역(정답/오답 기록)과 북마크 표시가 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+        체크한 정답/오답 기록과 북마크가 초기화됩니다. (추가한 기출문제와 수정한 해설은 그대로 유지됩니다.)
       </p>
       <div class="flex items-center justify-end gap-2">
         <button onclick="closeResetModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition">
           취소
         </button>
         <button onclick="confirmResetAll()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition">
-          전체 초기화
+          풀이 기록 초기화
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       문제 추가 / 회차 관리 모달
+       ===================================================================== -->
+  <div id="addExamModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-5 sm:p-6 shadow-2xl border border-slate-200 my-8">
+      <!-- 모달 헤더 -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900">회차별 문제 추가 및 관리</h3>
+          <p class="text-xs text-slate-500 mt-0.5">기출문제 텍스트를 그대로 붙여넣거나 등록된 회차를 삭제할 수 있습니다.</p>
+        </div>
+        <button onclick="closeAddModal()" class="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-lg font-bold">
+          ✕
+        </button>
+      </div>
+
+      <!-- 모달 내 탭 전환 -->
+      <div class="flex gap-2 mt-4 border-b border-slate-200 pb-3">
+        <button id="tabBtnPaste" onclick="switchAddModalTab('paste')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white">
+          텍스트 붙여넣기로 일괄 등록
+        </button>
+        <button id="tabBtnManage" onclick="switchAddModalTab('manage')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">
+          등록된 회차 목록 / 삭제
+        </button>
+      </div>
+
+      <!-- 탭 1: 텍스트 붙여넣기 자동 파싱 -->
+      <div id="panelPaste" class="mt-4 flex flex-col gap-4">
+        <!-- 메타데이터 입력 (연도, 직렬, 과목) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">출제 연도</label>
+            <select id="inputYear" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800">
+              <option value="2026">2026년</option>
+              <option value="2025">2025년</option>
+              <option value="2024" selected>2024년</option>
+              <option value="2023">2023년</option>
+              <option value="2022">2022년</option>
+              <option value="2021">2021년</option>
+              <option value="2020">2020년</option>
+              <option value="2019">2019년</option>
+              <option value="2018">2018년</option>
+              <option value="2017">2017년</option>
+              <option value="2016">2016년</option>
+              <option value="기타">기타/모의</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">직렬 구분</label>
+            <select id="inputExam" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800">
+              <option value="국가직">국가직</option>
+              <option value="지방직">지방직</option>
+              <option value="군무원">군무원</option>
+              <option value="모의고사">모의고사</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">과목명</label>
+            <select id="inputSubject" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800">
+              <option value="컴퓨터일반">컴퓨터일반</option>
+              <option value="정보보호론">정보보호론</option>
+              <option value="정보시스템보안">정보시스템보안</option>
+              <option value="자료구조론">자료구조론</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 문제 본문 입력창 -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-bold text-slate-700">1) 문제 텍스트 붙여넣기 (번호. 문제내용 / ① ② ③ ④ 형식)</label>
+            <button onclick="fillSamplePasteText()" class="text-[11px] font-semibold text-indigo-600 hover:underline">
+              입력 예시 채우기
+            </button>
+          </div>
+          <textarea
+            id="rawQuestionsInput"
+            rows="7"
+            class="w-full rounded-xl border border-slate-300 p-3 text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="PDF나 한글 파일에서 복사한 문제를 그대로 붙여넣으세요.&#10;예시:&#10;1. 다음 중 비대칭키 암호화 알고리즘은?&#10;① AES&#10;② RSA&#10;③ DES&#10;④ ARIA&#10;2. ..."></textarea>
+        </div>
+
+        <!-- 정답 일괄 입력창 -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            2) 정답 한 번에 입력 (선택사항 — 나중에 풀면서 수정해도 됩니다)
+          </label>
+          <input
+            type="text"
+            id="rawAnswersInput"
+            class="w-full rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="예: 2, 3, 2, 4, 1  또는  ② ③ ② ④ ①  또는  1:2 2:3 3:2 (공백/쉼표 구분 모두 인식)"
+          />
+        </div>
+
+        <div id="parseFeedback" class="hidden text-xs font-semibold p-3 rounded-xl"></div>
+
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button onclick="closeAddModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">
+            닫기
+          </button>
+          <button onclick="parseAndAddQuestions()" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold shadow-sm">
+            자동 변환 및 CBT에 추가
+          </button>
+        </div>
+      </div>
+
+      <!-- 탭 2: 등록된 회차 목록 관리 -->
+      <div id="panelManage" class="hidden mt-4">
+        <p class="text-xs text-slate-500 mb-3">현재 브라우저에 저장된 연도·직렬·과목별 문제 묶음입니다. 불필요한 회차만 골라 삭제할 수 있습니다.</p>
+        <div id="packListContainer" class="flex flex-col gap-2 max-h-80 overflow-y-auto pr-1"></div>
+        <div class="flex justify-end mt-4">
+          <button onclick="closeAddModal()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold">
+            닫기
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -235,31 +396,15 @@
        ===================================================================== -->
   <script>
     /**
-     * =========================================================================
-     * [문제 데이터 추가 안내]
-     * 향후 다른 회차나 과목(정보보호론 등) 문제를 추가할 때는 아래 `questions` 배열에
-     * 동일한 객체 형식으로 이어서 붙여넣기만 하면 자동으로 화면과 필터에 반영됩니다.
-     *
-     * 각 객체 필드 설명:
-     * - id: 고유 번호 (중복되지 않는 숫자, 예: 21, 22...)
-     * - subject: 과목명 (예: "컴퓨터일반", "정보보호론") -> 상단 과목 필터에 자동 생성됨
-     * - year: 출제 연도 (예: "2024")
-     * - exam: 직렬 구분 (예: "국가직", "지방직", "군무원")
-     * - question: 문제 발문 텍스트
-     * - codeOrTable: 코드, 표, <보기> 박스 등 추가 지문 (없으면 null)
-     *     * type: "code" (소스코드) | "box" (<보기> 박스) | "table" (표 데이터)
-     *     * content: 문자열 (type이 "table"일 경우 { headers: [...], rows: [[...], ...] } 객체)
-     * - options: 4개의 선택지 문자열 배열 (인덱스 0~3이 각각 ①~④번에 매핑)
-     * - answer: 정답 번호 (1, 2, 3, 4 중 하나)
-     * - explanation: 선택 후 표시될 상세 해설 텍스트
-     * =========================================================================
+     * 기본 내장 문제 20선 (초기 데이터)
      */
-    const questions = [
+    const defaultQuestions = [
       {
         id: 1,
+        num: 1,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "기억장치를 접근 속도가 빠른 것부터 순서대로 바르게 나열한 것은?",
         codeOrTable: null,
         options: [
@@ -273,9 +418,10 @@
       },
       {
         id: 2,
+        num: 2,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "CPU의 연산을 처리하기 위한 데이터의 기본 단위로서 CPU가 한 번에 처리할 수 있는 데이터 크기를 나타내는 것은?",
         codeOrTable: null,
         options: [
@@ -289,9 +435,10 @@
       },
       {
         id: 3,
+        num: 3,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "특정 환경에서 선택 가능한 행동들 중 보상(reward)을 최대화하는 행동을 선택하는 머신러닝(machine learning) 기법은?",
         codeOrTable: null,
         options: [
@@ -305,9 +452,10 @@
       },
       {
         id: 4,
+        num: 4,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "10진수 연산 (－25 ＋ 4)를 2의 보수를 이용하여 계산한 결과를 2진수로 표현한 것은? (단, 저장 공간은 8비트로 한다)",
         codeOrTable: null,
         options: [
@@ -321,9 +469,10 @@
       },
       {
         id: 5,
+        num: 5,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "네트워크 시스템을 관리하기 위한 UDP 기반의 프로토콜은?",
         codeOrTable: null,
         options: [
@@ -337,9 +486,10 @@
       },
       {
         id: 6,
+        num: 6,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "레지스터에 저장된 10진수 정수 29를 2비트만큼 논리적 우측 시프트(logical right shift)한 결과에 해당하는 10진수의 값은?",
         codeOrTable: null,
         options: [
@@ -353,9 +503,10 @@
       },
       {
         id: 7,
+        num: 7,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "다음 설명에 해당하는 소프트웨어 개발 프로세스 모델은?",
         codeOrTable: {
           type: "box",
@@ -372,9 +523,10 @@
       },
       {
         id: 8,
+        num: 8,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "메모리에 대한 설명으로 옳은 것만을 모두 고르면?",
         codeOrTable: {
           type: "box",
@@ -391,9 +543,10 @@
       },
       {
         id: 9,
+        num: 9,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "모듈의 응집도(cohesion) 및 결합도(coupling)에 대한 설명으로 옳지 않은 것은?",
         codeOrTable: null,
         options: [
@@ -407,9 +560,10 @@
       },
       {
         id: 10,
+        num: 10,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "다음 C 프로그램의 출력 결과는?",
         codeOrTable: {
           type: "code",
@@ -436,9 +590,10 @@ int main(void) {
       },
       {
         id: 11,
+        num: 11,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "데이터베이스 뷰(view)에 대한 설명으로 옳지 않은 것은?",
         codeOrTable: null,
         options: [
@@ -452,9 +607,10 @@ int main(void) {
       },
       {
         id: 12,
+        num: 12,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "2진 소수로 변환하면 무한 순환 소수가 되는 10진 소수는?",
         codeOrTable: null,
         options: [
@@ -468,9 +624,10 @@ int main(void) {
       },
       {
         id: 13,
+        num: 13,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "다음 릴레이션에서 속성 A ～ D의 함수 종속을 화살표(→)로 표현할 때 옳은 것은? (단, 아래 투플을 기준으로 판단하며, 새로운 투플은 추가되지 않는다고 가정한다)",
         codeOrTable: {
           type: "table",
@@ -495,9 +652,10 @@ int main(void) {
       },
       {
         id: 14,
+        num: 14,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "FIFO 페이지 교체 알고리즘을 사용하는 가상메모리에서 프로세스 P가 다음과 같은 페이지 번호 순서대로 페이지에 접근할 때, 페이지 부재(page-fault) 발생 횟수는? (단, 프로세스 P가 사용하는 페이지 프레임은 총 3개이고, 빈 상태에서 시작한다)",
         codeOrTable: {
           type: "box",
@@ -514,9 +672,10 @@ int main(void) {
       },
       {
         id: 15,
+        num: 15,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "IPv4 주소의 첫 번째 바이트와 각 바이트에 해당하는 클래스가 옳게 짝지어지지 않은 것은?",
         codeOrTable: null,
         options: [
@@ -530,9 +689,10 @@ int main(void) {
       },
       {
         id: 16,
+        num: 16,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "다음 Java 프로그램의 출력 결과는?",
         codeOrTable: {
           type: "code",
@@ -565,9 +725,10 @@ public class ClassB extends ClassA {
       },
       {
         id: 17,
+        num: 17,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "교착상태(deadlock)에 대한 설명으로 옳은 것만을 모두 고르면?",
         codeOrTable: {
           type: "box",
@@ -584,9 +745,10 @@ public class ClassB extends ClassA {
       },
       {
         id: 18,
+        num: 18,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "다음 파이썬 코드로 작성된 partition() 함수를 이용하여, 주어진 배열을 퀵 정렬(quick sort)로 오름차순 정렬하고자 한다. 정렬 과정에서 단계별 정렬 순서로 나타날 수 없는 것은? (단, 피벗(pivot)은 정렬하고자 하는 대상의 마지막 원소로 선택한다)",
         codeOrTable: {
           type: "code",
@@ -619,9 +781,10 @@ def partition(A, first, last):
       },
       {
         id: 19,
+        num: 19,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "디스크 스케줄링 기법 중 SSTF를 사용하여 다음과 같은 작업 대기 큐(디스크 큐)의 작업을 처리하고자 하는 경우, 처리되는 트랙의 순서를 바르게 나열한 것은? (단, 추가 I/O 요청은 없다고 가정한다)",
         codeOrTable: {
           type: "box",
@@ -638,9 +801,10 @@ def partition(A, first, last):
       },
       {
         id: 20,
+        num: 20,
         subject: "컴퓨터일반",
-        year: "기출",
-        exam: "전산직",
+        year: "2024",
+        exam: "국가직",
         question: "다음 C 프로그램의 출력 결과는?",
         codeOrTable: {
           type: "code",
@@ -680,77 +844,128 @@ int main(void) {
     // =========================================================================
     // 애플리케이션 상태 및 localStorage 관리
     // =========================================================================
-    const STORAGE_KEY_ANSWERS = "cs_cbt_user_answers_v1";
-    const STORAGE_KEY_BOOKMARKS = "cs_cbt_user_bookmarks_v1";
+    const STORAGE_KEY_QUESTIONS = "cs_cbt_questions_bank_v2";
+    const STORAGE_KEY_ANSWERS = "cs_cbt_user_answers_v2";
+    const STORAGE_KEY_BOOKMARKS = "cs_cbt_user_bookmarks_v2";
+    const STORAGE_KEY_CUSTOM_EXP = "cs_cbt_custom_explanations_v2";
 
-    let userAnswers = {};   // { [questionId]: selectedOptionNumber (1~4) }
-    let bookmarks = {};     // { [questionId]: true }
+    let questions = [];
+    let userAnswers = {};         // { [questionId]: selectedOptionNumber (1~4) }
+    let bookmarks = {};           // { [questionId]: true }
+    let customExplanations = {};  // { [questionId]: "사용자 편집 해설 문자열" }
+
+    let yearFilter = "ALL";
+    let examFilter = "ALL";
     let subjectFilter = "ALL";
-    let filterMode = "all"; // "all" | "wrong" | "bookmark"
+    let filterMode = "all"; // "all" | "unsolved" | "wrong" | "bookmark"
+
     let currentFilteredList = [];
     let currentIndex = 0;
+    let isEditingExplanation = false;
 
     const circleNumbers = ["①", "②", "③", "④"];
 
     // 초기화 진입점
     window.addEventListener("DOMContentLoaded", () => {
       loadStateFromStorage();
-      populateSubjectDropdowns();
+      populateFilterDropdowns();
       applyFiltersAndRender(true);
       setupKeyboardShortcuts();
     });
 
+    // 토스트 알림 표시
+    function showToast(msg) {
+      const toast = document.getElementById("toastBanner");
+      toast.textContent = msg;
+      toast.classList.remove("hidden");
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        toast.classList.add("hidden");
+      }, 2800);
+    }
+
     // localStorage 불러오기
     function loadStateFromStorage() {
       try {
+        const savedQuestions = localStorage.getItem(STORAGE_KEY_QUESTIONS);
         const savedAnswers = localStorage.getItem(STORAGE_KEY_ANSWERS);
         const savedBookmarks = localStorage.getItem(STORAGE_KEY_BOOKMARKS);
+        const savedExp = localStorage.getItem(STORAGE_KEY_CUSTOM_EXP);
+
+        if (savedQuestions) {
+          const parsed = JSON.parse(savedQuestions);
+          questions = Array.isArray(parsed) && parsed.length > 0 ? parsed : structuredClone(defaultQuestions);
+        } else {
+          questions = structuredClone(defaultQuestions);
+          localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(questions));
+        }
+
         if (savedAnswers) userAnswers = JSON.parse(savedAnswers);
         if (savedBookmarks) bookmarks = JSON.parse(savedBookmarks);
+        if (savedExp) customExplanations = JSON.parse(savedExp);
       } catch (e) {
         console.error("로컬 스토리지 로드 오류:", e);
+        questions = structuredClone(defaultQuestions);
         userAnswers = {};
         bookmarks = {};
+        customExplanations = {};
       }
     }
 
     // localStorage 저장하기
     function saveStateToStorage() {
       try {
+        localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(questions));
         localStorage.setItem(STORAGE_KEY_ANSWERS, JSON.stringify(userAnswers));
         localStorage.setItem(STORAGE_KEY_BOOKMARKS, JSON.stringify(bookmarks));
+        localStorage.setItem(STORAGE_KEY_CUSTOM_EXP, JSON.stringify(customExplanations));
       } catch (e) {
         console.error("로컬 스토리지 저장 오류:", e);
       }
     }
 
-    // 과목 드롭다운 옵션 동적 생성 (향후 과목 추가 시 자동 반영)
-    function populateSubjectDropdowns() {
+    // 연도 / 직렬 / 과목 드롭다운 동적 생성
+    function populateFilterDropdowns() {
+      const years = Array.from(new Set(questions.map(q => q.year))).sort((a, b) => b.localeCompare(a));
+      const exams = Array.from(new Set(questions.map(q => q.exam)));
       const subjects = Array.from(new Set(questions.map(q => q.subject)));
-      const desktopSelect = document.getElementById("subjectFilterDesktop");
-      const mobileSelect = document.getElementById("subjectFilterMobile");
 
-      const optionsHtml = `<option value="ALL">전체 과목 (${questions.length}문제)</option>` +
-        subjects.map(subj => {
-          const cnt = questions.filter(q => q.subject === subj).length;
-          return `<option value="${subj}">${subj} (${cnt}문제)</option>`;
-        }).join("");
+      const yearSel = document.getElementById("yearFilter");
+      const examSel = document.getElementById("examFilter");
+      const subjSel = document.getElementById("subjectFilter");
 
-      desktopSelect.innerHTML = optionsHtml;
-      mobileSelect.innerHTML = optionsHtml;
+      yearSel.innerHTML = `<option value="ALL">전체 연도</option>` +
+        years.map(y => `<option value="${y}">${y === "기타" ? "기타/모의" : y + "년"}</option>`).join("");
+
+      examSel.innerHTML = `<option value="ALL">전체 직렬</option>` +
+        exams.map(ex => `<option value="${ex}">${ex}</option>`).join("");
+
+      subjSel.innerHTML = `<option value="ALL">전체 과목 (${questions.length})</option>` +
+        subjects.map(s => `<option value="${s}">${s} (${questions.filter(q => q.subject === s).length})</option>`).join("");
+
+      // 이전 선택값이 여전히 유효하면 유지
+      yearSel.value = years.includes(yearFilter) ? yearFilter : "ALL";
+      examSel.value = exams.includes(examFilter) ? examFilter : "ALL";
+      subjSel.value = subjects.includes(subjectFilter) ? subjectFilter : "ALL";
+
+      yearFilter = yearSel.value;
+      examFilter = examSel.value;
+      subjectFilter = subjSel.value;
     }
 
-    // 과목 변경 핸들러
-    function changeSubjectFilter(value) {
-      subjectFilter = value;
-      document.getElementById("subjectFilterDesktop").value = value;
-      document.getElementById("subjectFilterMobile").value = value;
+    // 필터 드롭다운 변경 핸들러
+    function onFilterChange() {
+      yearFilter = document.getElementById("yearFilter").value;
+      examFilter = document.getElementById("examFilter").value;
+      subjectFilter = document.getElementById("subjectFilter").value;
+      isEditingExplanation = false;
       applyFiltersAndRender(true);
     }
 
-    // 보기 모드 변경 핸들러 ('all' | 'wrong' | 'bookmark')
+    // 보기 모드 변경 핸들러 ('all' | 'unsolved' | 'wrong' | 'bookmark')
     function setFilterMode(mode) {
       filterMode = mode;
+      isEditingExplanation = false;
       updateFilterTabStyles();
       applyFiltersAndRender(true);
     }
@@ -758,41 +973,51 @@ int main(void) {
     function updateFilterTabStyles() {
       const modes = [
         { id: "btnModeAll", key: "all" },
+        { id: "btnModeUnsolved", key: "unsolved" },
         { id: "btnModeWrong", key: "wrong" },
         { id: "btnModeBookmark", key: "bookmark" }
       ];
       modes.forEach(m => {
         const el = document.getElementById(m.id);
         if (filterMode === m.key) {
-          el.className = "px-2.5 py-1.5 text-xs font-semibold rounded-md transition bg-white text-indigo-600 shadow-sm";
+          el.className = "px-2.5 py-1 text-xs font-semibold rounded-md transition bg-white text-indigo-600 shadow-sm";
         } else {
-          el.className = "px-2.5 py-1.5 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900";
+          el.className = "px-2.5 py-1 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900";
         }
+      });
+    }
+
+    // 현재 조건에 맞는 기본 문제 집합 반환
+    function getBaseFilteredQuestions() {
+      return questions.filter(q => {
+        if (yearFilter !== "ALL" && q.year !== yearFilter) return false;
+        if (examFilter !== "ALL" && q.exam !== examFilter) return false;
+        if (subjectFilter !== "ALL" && q.subject !== subjectFilter) return false;
+        return true;
       });
     }
 
     // 필터 적용 및 화면 갱신
     function applyFiltersAndRender(resetToFirst = false) {
-      // 1) 과목 기준 1차 필터링
-      const subjectQuestions = subjectFilter === "ALL"
-        ? questions
-        : questions.filter(q => q.subject === subjectFilter);
+      const baseQuestions = getBaseFilteredQuestions();
 
-      // 상단 카운트 배지 업데이트
-      const wrongList = subjectQuestions.filter(q => userAnswers[q.id] !== undefined && userAnswers[q.id] !== q.answer);
-      const bookmarkList = subjectQuestions.filter(q => Boolean(bookmarks[q.id]));
+      const unsolvedList = baseQuestions.filter(q => userAnswers[q.id] === undefined);
+      const wrongList = baseQuestions.filter(q => userAnswers[q.id] !== undefined && userAnswers[q.id] !== q.answer);
+      const bookmarkList = baseQuestions.filter(q => Boolean(bookmarks[q.id]));
 
-      document.getElementById("countAll").textContent = subjectQuestions.length;
+      document.getElementById("countAll").textContent = baseQuestions.length;
+      document.getElementById("countUnsolved").textContent = unsolvedList.length;
       document.getElementById("countWrong").textContent = wrongList.length;
       document.getElementById("countBookmark").textContent = bookmarkList.length;
 
-      // 2) 모드 기준 2차 필터링
-      if (filterMode === "wrong") {
+      if (filterMode === "unsolved") {
+        currentFilteredList = unsolvedList;
+      } else if (filterMode === "wrong") {
         currentFilteredList = wrongList;
       } else if (filterMode === "bookmark") {
         currentFilteredList = bookmarkList;
       } else {
-        currentFilteredList = subjectQuestions;
+        currentFilteredList = baseQuestions;
       }
 
       if (resetToFirst) {
@@ -801,7 +1026,7 @@ int main(void) {
         currentIndex = Math.max(0, currentFilteredList.length - 1);
       }
 
-      updateStatsPanel(subjectQuestions);
+      updateStatsPanel(baseQuestions);
       renderQuestionGrid();
       renderCurrentQuestion();
     }
@@ -842,6 +1067,7 @@ int main(void) {
         const ans = userAnswers[q.id];
         const isCurrent = idx === currentIndex;
         const isBookmarked = Boolean(bookmarks[q.id]);
+        const displayNum = q.num || (idx + 1);
 
         let colorClass = "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200";
         if (ans !== undefined) {
@@ -858,9 +1084,9 @@ int main(void) {
           <button
             onclick="jumpToQuestion(${idx})"
             class="relative h-9 rounded-lg border text-xs transition flex items-center justify-center ${colorClass} ${ringClass}"
-            title="${q.id}번 문제"
+            title="${q.year} ${q.exam} ${q.subject} ${displayNum}번"
           >
-            ${q.id}
+            ${displayNum}
             ${isBookmarked ? `<span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-400 border border-white"></span>` : ""}
           </button>
         `;
@@ -878,10 +1104,13 @@ int main(void) {
 
         if (filterMode === "wrong") {
           document.getElementById("emptyStateTitle").textContent = "틀린 문제가 없습니다!";
-          document.getElementById("emptyStateDesc").textContent = "모든 문제를 맞혔거나 아직 오답 기록이 없습니다.";
+          document.getElementById("emptyStateDesc").textContent = "선택한 필터 조건에서 오답 기록이 없습니다.";
         } else if (filterMode === "bookmark") {
           document.getElementById("emptyStateTitle").textContent = "북마크한 문제가 없습니다";
-          document.getElementById("emptyStateDesc").textContent = "다시 보고 싶은 문제 우측 상단의 별표(북마크)를 눌러 저장해 보세요.";
+          document.getElementById("emptyStateDesc").textContent = "다시 보고 싶은 문제 우측 상단의 북마크 버튼을 눌러 저장해 보세요.";
+        } else if (filterMode === "unsolved") {
+          document.getElementById("emptyStateTitle").textContent = "모든 문제를 다 풀었습니다!";
+          document.getElementById("emptyStateDesc").textContent = "오답만 다시 풀거나 전체 보기로 복습해 보세요.";
         }
         return;
       }
@@ -890,13 +1119,14 @@ int main(void) {
       qCard.classList.remove("hidden");
 
       const q = currentFilteredList[currentIndex];
+      const displayNum = q.num || (currentIndex + 1);
       const selectedOption = userAnswers[q.id];
       const isAnswered = selectedOption !== undefined;
       const isBookmarked = Boolean(bookmarks[q.id]);
 
       // 상단 배지 업데이트
-      document.getElementById("qNumberBadge").textContent = `문제 ${q.id} (${currentIndex + 1} / ${currentFilteredList.length})`;
-      document.getElementById("qMetaBadge").textContent = `${q.subject} · ${q.year} ${q.exam}`;
+      document.getElementById("qNumberBadge").textContent = `문제 ${displayNum} (${currentIndex + 1} / ${currentFilteredList.length})`;
+      document.getElementById("qMetaBadge").textContent = `${q.year}년 · ${q.exam} · ${q.subject}`;
 
       const statusBadge = document.getElementById("qStatusBadge");
       if (isAnswered) {
@@ -928,7 +1158,7 @@ int main(void) {
       }
 
       // 문제 발문 렌더링
-      document.getElementById("qTitle").textContent = `${q.id}. ${q.question}`;
+      document.getElementById("qTitle").textContent = `${displayNum}. ${q.question}`;
 
       // 추가 지문(코드 / 보기박스 / 표) 렌더링
       const extraContainer = document.getElementById("qExtraContainer");
@@ -982,12 +1212,10 @@ int main(void) {
 
         if (isAnswered) {
           if (optionNum === q.answer) {
-            // 정답 보기 하이라이트 (초록색)
             btnStyle = "bg-emerald-50 border-emerald-500 text-emerald-950 font-semibold ring-1 ring-emerald-500";
             badgeStyle = "bg-emerald-600 text-white";
             rightTag = `<span class="ml-auto text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md shrink-0">정답</span>`;
           } else if (optionNum === selectedOption) {
-            // 사용자가 선택한 오답 하이라이트 (빨간색)
             btnStyle = "bg-rose-50 border-rose-500 text-rose-950 font-semibold ring-1 ring-rose-500";
             badgeStyle = "bg-rose-600 text-white";
             rightTag = `<span class="ml-auto text-xs font-bold text-rose-700 bg-rose-100 px-2 py-0.5 rounded-md shrink-0">내 선택</span>`;
@@ -1034,9 +1262,25 @@ int main(void) {
           resultTitle.textContent = `오답입니다. 정답은 ${circleNumbers[q.answer - 1]}번입니다.`;
         }
 
-        document.getElementById("explanationText").textContent = q.explanation;
+        const hasCustomExp = customExplanations[q.id] !== undefined;
+        const activeExplanation = hasCustomExp ? customExplanations[q.id] : (q.explanation || "등록된 해설이 없습니다. 우측 상단 [풀이 편집]을 눌러 나만의 해설을 추가해 보세요.");
+
+        document.getElementById("editedBadge").classList.toggle("hidden", !hasCustomExp);
+        document.getElementById("explanationText").textContent = activeExplanation;
+
+        // 편집 모드 vs 읽기 모드 전환 반영
+        const viewMode = document.getElementById("explanationViewMode");
+        const editMode = document.getElementById("explanationEditMode");
+        if (isEditingExplanation) {
+          viewMode.classList.add("hidden");
+          editMode.classList.remove("hidden");
+        } else {
+          viewMode.classList.remove("hidden");
+          editMode.classList.add("hidden");
+        }
       } else {
         expBox.classList.add("hidden");
+        isEditingExplanation = false;
       }
 
       // 이전/다음 버튼 활성 상태 업데이트
@@ -1044,37 +1288,94 @@ int main(void) {
       document.getElementById("nextBtn").disabled = currentIndex >= currentFilteredList.length - 1;
     }
 
-    // 보기 선택 처리 (즉시 채점 및 저장)
+    // =========================================================================
+    // 풀이 편집 / 내 메모 추가 기능
+    // =========================================================================
+    function toggleExplanationEditor() {
+      if (currentFilteredList.length === 0) return;
+      const q = currentFilteredList[currentIndex];
+      isEditingExplanation = !isEditingExplanation;
+
+      if (isEditingExplanation) {
+        const currentText = customExplanations[q.id] !== undefined ? customExplanations[q.id] : (q.explanation || "");
+        const textarea = document.getElementById("explanationTextarea");
+        textarea.value = currentText;
+        renderCurrentQuestion();
+        textarea.focus();
+      } else {
+        renderCurrentQuestion();
+      }
+    }
+
+    function appendNoteTemplate() {
+      const textarea = document.getElementById("explanationTextarea");
+      const prefix = textarea.value.trim() ? "\n\n" : "";
+      textarea.value += `${prefix}────────────────────\n[내 풀이 / 암기팁]\n• `;
+      textarea.focus();
+    }
+
+    function saveExplanationEdit() {
+      if (currentFilteredList.length === 0) return;
+      const q = currentFilteredList[currentIndex];
+      const newText = document.getElementById("explanationTextarea").value.trim();
+
+      if (newText === (q.explanation || "").trim()) {
+        delete customExplanations[q.id];
+      } else {
+        customExplanations[q.id] = newText;
+      }
+
+      saveStateToStorage();
+      isEditingExplanation = false;
+      renderCurrentQuestion();
+      showToast("수정된 풀이가 브라우저에 저장되었습니다.");
+    }
+
+    function cancelExplanationEdit() {
+      isEditingExplanation = false;
+      renderCurrentQuestion();
+    }
+
+    function restoreOriginalExplanation() {
+      if (currentFilteredList.length === 0) return;
+      const q = currentFilteredList[currentIndex];
+      delete customExplanations[q.id];
+      saveStateToStorage();
+      isEditingExplanation = false;
+      renderCurrentQuestion();
+      showToast("기본 해설로 복원되었습니다.");
+    }
+
+    // =========================================================================
+    // 보기 선택, 북마크, 문제 이동
+    // =========================================================================
     function selectOption(optionNum) {
       if (currentFilteredList.length === 0) return;
       const q = currentFilteredList[currentIndex];
       userAnswers[q.id] = optionNum;
+      isEditingExplanation = false;
       saveStateToStorage();
 
-      // 오답 필터 모드에서 문제를 맞혔더라도 현재 해설을 볼 수 있도록 목록 유지 후 UI만 갱신
-      const subjectQuestions = subjectFilter === "ALL"
-        ? questions
-        : questions.filter(item => item.subject === subjectFilter);
+      const baseQuestions = getBaseFilteredQuestions();
+      document.getElementById("countAll").textContent = baseQuestions.length;
+      document.getElementById("countUnsolved").textContent = baseQuestions.filter(item => userAnswers[item.id] === undefined).length;
+      document.getElementById("countWrong").textContent = baseQuestions.filter(item => userAnswers[item.id] !== undefined && userAnswers[item.id] !== item.answer).length;
+      document.getElementById("countBookmark").textContent = baseQuestions.filter(item => Boolean(bookmarks[item.id])).length;
 
-      document.getElementById("countAll").textContent = subjectQuestions.length;
-      document.getElementById("countWrong").textContent = subjectQuestions.filter(item => userAnswers[item.id] !== undefined && userAnswers[item.id] !== item.answer).length;
-      document.getElementById("countBookmark").textContent = subjectQuestions.filter(item => Boolean(bookmarks[item.id])).length;
-
-      updateStatsPanel(subjectQuestions);
+      updateStatsPanel(baseQuestions);
       renderQuestionGrid();
       renderCurrentQuestion();
     }
 
-    // 현재 문제 풀이 기록만 초기화 (다시 풀기)
     function resetCurrentQuestion() {
       if (currentFilteredList.length === 0) return;
       const q = currentFilteredList[currentIndex];
       delete userAnswers[q.id];
+      isEditingExplanation = false;
       saveStateToStorage();
       applyFiltersAndRender(false);
     }
 
-    // 북마크 토글
     function toggleBookmark() {
       if (currentFilteredList.length === 0) return;
       const q = currentFilteredList[currentIndex];
@@ -1087,32 +1388,313 @@ int main(void) {
       applyFiltersAndRender(false);
     }
 
-    // 문제 이동 (이전/다음)
     function moveQuestion(delta) {
       const nextIdx = currentIndex + delta;
       if (nextIdx >= 0 && nextIdx < currentFilteredList.length) {
         currentIndex = nextIdx;
+        isEditingExplanation = false;
         renderQuestionGrid();
         renderCurrentQuestion();
       }
     }
 
-    // 특정 번호로 점프
     function jumpToQuestion(index) {
       if (index >= 0 && index < currentFilteredList.length) {
         currentIndex = index;
+        isEditingExplanation = false;
         renderQuestionGrid();
         renderCurrentQuestion();
       }
     }
 
-    // 키보드 단축키 지원 (1~4번 선택, 좌우 화살표 이동)
+    // =========================================================================
+    // 문제 추가 / 회차 관리 모달 및 텍스트 자동 파서
+    // =========================================================================
+    function openAddModal() {
+      document.getElementById("addExamModal").classList.remove("hidden");
+      document.getElementById("parseFeedback").classList.add("hidden");
+      switchAddModalTab("paste");
+    }
+
+    function closeAddModal() {
+      document.getElementById("addExamModal").classList.add("hidden");
+    }
+
+    function switchAddModalTab(tab) {
+      const isPaste = tab === "paste";
+      document.getElementById("panelPaste").classList.toggle("hidden", !isPaste);
+      document.getElementById("panelManage").classList.toggle("hidden", isPaste);
+
+      document.getElementById("tabBtnPaste").className = isPaste
+        ? "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white"
+        : "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200";
+
+      document.getElementById("tabBtnManage").className = !isPaste
+        ? "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white"
+        : "px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200";
+
+      if (!isPaste) renderPackManagerList();
+    }
+
+    function fillSamplePasteText() {
+      document.getElementById("inputYear").value = "2025";
+      document.getElementById("inputExam").value = "국가직";
+      document.getElementById("inputSubject").value = "정보보호론";
+      document.getElementById("rawQuestionsInput").value =
+`1. 대칭키 암호 알고리즘과 비교한 공개키 암호 알고리즘의 특징으로 옳은 것은?
+① 암·복호화 속도가 대칭키 방식보다 훨씬 빠르다.
+② 키 배송 문제를 해결할 수 있으며 전자서명 기능을 제공한다.
+③ 송신자와 수신자가 동일한 비밀키를 공유해야 한다.
+④ 스트림 암호 방식이 주로 사용된다.
+
+2. 다음 중 해시 함수의 성질에 해당하지 않는 것은?
+① 일방향성(One-wayness)
+② 약한 충돌 저항성(Weak collision resistance)
+③ 강한 충돌 저항성(Strong collision resistance)
+④ 가역성(Reversibility)`;
+      document.getElementById("rawAnswersInput").value = "2, 4";
+    }
+
+    // 붙여넣은 텍스트를 자동으로 문제 객체 배열로 파싱
+    function parseAndAddQuestions() {
+      const year = document.getElementById("inputYear").value;
+      const exam = document.getElementById("inputExam").value;
+      const subject = document.getElementById("inputSubject").value;
+      const rawText = document.getElementById("rawQuestionsInput").value.trim();
+      const rawAnswers = document.getElementById("rawAnswersInput").value.trim();
+      const feedbackEl = document.getElementById("parseFeedback");
+
+      if (!rawText) {
+        feedbackEl.className = "text-xs font-semibold p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200";
+        feedbackEl.textContent = "문제 텍스트를 먼저 붙여넣어 주세요.";
+        feedbackEl.classList.remove("hidden");
+        return;
+      }
+
+      // 정답 파싱 (숫자 1~4 또는 ①~④ 추출)
+      const parsedAnswers = parseAnswersString(rawAnswers);
+
+      // 문제 분리: 줄 시작 부분의 "1." 또는 "01." 또는 "1)" 패턴 기준
+      const blocks = rawText
+        .replace(/\r\n/g, "\n")
+        .split(/(?=(?:^|\n)\s*\d{1,2}\s*[\.\)]\s+)/)
+        .map(b => b.trim())
+        .filter(Boolean);
+
+      const newItems = [];
+      let nextId = questions.reduce((max, q) => Math.max(max, q.id), 0) + 1;
+
+      blocks.forEach((block, idx) => {
+        // 번호 추출
+        const numMatch = block.match(/^(\d{1,2})\s*[\.\)]\s*/);
+        const qNum = numMatch ? parseInt(numMatch[1], 10) : (idx + 1);
+        const bodyWithoutNum = block.replace(/^(\d{1,2})\s*[\.\)]\s*/, "").trim();
+
+        // ① ② ③ ④ 위치 탐색
+        const opt1Idx = bodyWithoutNum.indexOf("①");
+        const opt2Idx = bodyWithoutNum.indexOf("②");
+        const opt3Idx = bodyWithoutNum.indexOf("③");
+        const opt4Idx = bodyWithoutNum.indexOf("④");
+
+        if (opt1Idx !== -1 && opt2Idx !== -1 && opt3Idx !== -1 && opt4Idx !== -1) {
+          const fullStem = bodyWithoutNum.slice(0, opt1Idx).trim();
+          const opt1 = bodyWithoutNum.slice(opt1Idx + 1, opt2Idx).trim();
+          const opt2 = bodyWithoutNum.slice(opt2Idx + 1, opt3Idx).trim();
+          const opt3 = bodyWithoutNum.slice(opt3Idx + 1, opt4Idx).trim();
+          const opt4 = bodyWithoutNum.slice(opt4Idx + 1).trim();
+
+          // 지문 첫 줄은 질문, 나머지 줄(코드/보기 등)이 길면 box로 분리
+          const stemLines = fullStem.split("\n");
+          const mainQuestion = stemLines[0].trim();
+          const extraText = stemLines.slice(1).join("\n").trim();
+
+          const ans = parsedAnswers[idx] || 1;
+
+          newItems.push({
+            id: nextId++,
+            num: qNum,
+            subject,
+            year,
+            exam,
+            question: mainQuestion,
+            codeOrTable: extraText ? { type: "box", content: extraText } : null,
+            options: [opt1, opt2, opt3, opt4],
+            answer: ans,
+            explanation: parsedAnswers[idx]
+              ? `${year}년 ${exam} ${subject} ${qNum}번 기출문제입니다. [풀이 편집] 버튼을 눌러 나만의 해설을 기록해 보세요.`
+              : `정답이 미입력되어 임시로 ①번으로 지정되었습니다. [풀이 편집]에서 정답 해설을 추가해 주세요.`
+          });
+        }
+      });
+
+      if (newItems.length === 0) {
+        feedbackEl.className = "text-xs font-semibold p-3 rounded-xl bg-rose-50 text-rose-700 border border-rose-200";
+        feedbackEl.textContent = "문제를 인식하지 못했습니다. 각 문제가 '1. 문제내용'으로 시작하고 '① ② ③ ④' 보기가 포함되어 있는지 확인해 주세요.";
+        feedbackEl.classList.remove("hidden");
+        return;
+      }
+
+      questions.push(...newItems);
+      saveStateToStorage();
+
+      // 방금 등록한 연도/직렬/과목으로 필터 자동 전환
+      yearFilter = year;
+      examFilter = exam;
+      subjectFilter = subject;
+      filterMode = "all";
+
+      populateFilterDropdowns();
+      updateFilterTabStyles();
+      applyFiltersAndRender(true);
+
+      document.getElementById("rawQuestionsInput").value = "";
+      document.getElementById("rawAnswersInput").value = "";
+      closeAddModal();
+      showToast(`${year}년 ${exam} ${subject} ${newItems.length}문제가 등록되었습니다!`);
+    }
+
+    // 정답 문자열 파서 ("2, 3, 2" / "② ③ ②" / "1:2 2:3" 모두 지원)
+    function parseAnswersString(str) {
+      if (!str) return [];
+      const circleMap = { "①": 1, "②": 2, "③": 3, "④": 4 };
+      // "1:2" 또는 "1-2" 형태에서 앞의 문제번호 제거
+      const cleaned = str.replace(/\d{1,2}\s*[:\-\)\.]\s*(?=[1-4①-④])/g, " ");
+      const tokens = cleaned.match(/[1-4①-④]/g) || [];
+      return tokens.map(t => circleMap[t] || parseInt(t, 10));
+    }
+
+    // 회차별 묶음 관리 목록 렌더링
+    function renderPackManagerList() {
+      const container = document.getElementById("packListContainer");
+      const packMap = new Map();
+
+      questions.forEach(q => {
+        const key = `${q.year}|||${q.exam}|||${q.subject}`;
+        if (!packMap.has(key)) {
+          packMap.set(key, { year: q.year, exam: q.exam, subject: q.subject, count: 0 });
+        }
+        packMap.get(key).count++;
+      });
+
+      const packs = Array.from(packMap.values());
+      if (packs.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">등록된 회차가 없습니다.</div>`;
+        return;
+      }
+
+      container.innerHTML = packs.map(p => `
+        <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50">
+          <div>
+            <span class="text-sm font-bold text-slate-800">${p.year}년 ${p.exam} · ${p.subject}</span>
+            <span class="ml-2 text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">${p.count}문제</span>
+          </div>
+          <button
+            onclick="deleteQuestionPack('${p.year}', '${p.exam}', '${p.subject}')"
+            class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-bold transition"
+          >
+            회차 삭제
+          </button>
+        </div>
+      `).join("");
+    }
+
+    function deleteQuestionPack(year, exam, subject) {
+      const targetIds = new Set(
+        questions
+          .filter(q => q.year === year && q.exam === exam && q.subject === subject)
+          .map(q => q.id)
+      );
+
+      questions = questions.filter(q => !targetIds.has(q.id));
+      targetIds.forEach(id => {
+        delete userAnswers[id];
+        delete bookmarks[id];
+        delete customExplanations[id];
+      });
+
+      saveStateToStorage();
+      populateFilterDropdowns();
+      applyFiltersAndRender(true);
+      renderPackManagerList();
+      showToast(`${year}년 ${exam} ${subject} 회차가 삭제되었습니다.`);
+    }
+
+    // =========================================================================
+    // JSON 파일 백업 내보내기 / 불러오기
+    // =========================================================================
+    function exportAllDataJson() {
+      const payload = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        questions,
+        customExplanations,
+        userAnswers,
+        bookmarks
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const dateStr = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `전산직_CBT_백업_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("전체 문제 및 수정된 풀이가 JSON 파일로 저장되었습니다.");
+    }
+
+    function importDataJsonFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data || !Array.isArray(data.questions)) {
+            showToast("올바른 CBT 백업 JSON 형식이 아닙니다.");
+            return;
+          }
+
+          questions = data.questions;
+          if (data.customExplanations) customExplanations = data.customExplanations;
+          if (data.userAnswers) userAnswers = data.userAnswers;
+          if (data.bookmarks) bookmarks = data.bookmarks;
+
+          saveStateToStorage();
+          populateFilterDropdowns();
+          applyFiltersAndRender(true);
+          showToast(`총 ${questions.length}문제 데이터를 성공적으로 불러왔습니다.`);
+        } catch (err) {
+          console.error(err);
+          showToast("JSON 파일을 읽는 중 오류가 발생했습니다.");
+        } finally {
+          event.target.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // =========================================================================
+    // 키보드 단축키 및 초기화 모달
+    // =========================================================================
     function setupKeyboardShortcuts() {
       window.addEventListener("keydown", (e) => {
+        // 입력창(textarea, input, select) 타이핑 중에는 단축키 무시
+        const tag = document.activeElement?.tagName;
+        if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") return;
+
         // 모달이 열려 있을 때 ESC로 닫기
         const resetModal = document.getElementById("resetModal");
+        const addModal = document.getElementById("addExamModal");
         if (!resetModal.classList.contains("hidden")) {
           if (e.key === "Escape") closeResetModal();
+          return;
+        }
+        if (!addModal.classList.contains("hidden")) {
+          if (e.key === "Escape") closeAddModal();
           return;
         }
 
@@ -1128,7 +1710,6 @@ int main(void) {
       });
     }
 
-    // 초기화 모달 제어
     function openResetModal() {
       document.getElementById("resetModal").classList.remove("hidden");
     }
@@ -1143,9 +1724,9 @@ int main(void) {
       saveStateToStorage();
       closeResetModal();
       setFilterMode("all");
+      showToast("풀이 기록이 초기화되었습니다.");
     }
 
-    // HTML 이스케이프 유틸리티 (코드 블록의 <stdio.h> 등 태그 깨짐 방지)
     function escapeHtml(str) {
       return String(str)
         .replace(/&/g, "&amp;")
