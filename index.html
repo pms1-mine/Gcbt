@@ -1,2198 +1,250 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>전산 cbt</title>
-  <style>
-    :root {
-      --bg: #f4f6f9;
-      --card: #ffffff;
-      --primary: #2563eb;
-      --primary-hover: #1d4ed8;
-      --text: #1e293b;
-      --muted: #64748b;
-      --border: #e2e8f0;
-      --correct-bg: #ecfdf5;
-      --correct-border: #10b981;
-      --correct-text: #065f46;
-      --wrong-bg: #fef2f2;
-      --wrong-border: #ef4444;
-      --wrong-text: #991b1b;
-      --code-bg: #0f172a;
-      --code-text: #f8fafc;
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    header {
-      background: #1e293b;
-      color: #fff;
-      padding: 14px 20px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .brand h1 {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .badge-mode {
-      background: #3b82f6;
-      color: #fff;
-      font-size: 0.75rem;
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-
-    .header-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    button {
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.875rem;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      padding: 7px 13px;
-      font-weight: 600;
-      transition: all 0.15s ease;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-    }
-    .btn-primary:hover { background: var(--primary-hover); }
-
-    .btn-dark-outline {
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-      border-color: rgba(255,255,255,0.25);
-    }
-    .btn-dark-outline:hover { background: rgba(255,255,255,0.2); }
-
-    .btn-outline {
-      background: #fff;
-      color: var(--text);
-      border-color: var(--border);
-    }
-    .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; }
-
-    .btn-danger {
-      background: #fee2e2;
-      color: #b91c1c;
-      border-color: #fecaca;
-    }
-    .btn-danger:hover { background: #fecaca; }
-
-    .btn-success {
-      background: #10b981;
-      color: #fff;
-    }
-    .btn-success:hover { background: #059669; }
-
-    .container {
-      max-width: 1120px;
-      margin: 20px auto;
-      padding: 0 16px 48px;
-      display: grid;
-      grid-template-columns: 1fr 290px;
-      gap: 20px;
-    }
-
-    @media (max-width: 900px) {
-      .container { grid-template-columns: 1fr; }
-    }
-
-    /* Filter bar */
-    .filter-bar {
-      grid-column: 1 / -1;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .filter-group {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-
-    select, input[type="text"], input[type="number"], textarea {
-      font-family: inherit;
-      font-size: 0.875rem;
-      padding: 7px 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-      color: var(--text);
-    }
-    select:focus, input:focus, textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-    }
-
-    .stats-pill {
-      font-size: 0.85rem;
-      color: var(--muted);
-      background: #f1f5f9;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-weight: 600;
-    }
-    .stats-pill strong { color: var(--text); }
-
-    /* Question Card */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-    }
-
-    .q-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 14px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .q-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .tag {
-      font-size: 0.78rem;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 6px;
-      background: #eff6ff;
-      color: #1d4ed8;
-    }
-    .tag.gray { background: #f1f5f9; color: #475569; }
-
-    .bookmark-btn {
-      background: #fff;
-      border: 1px solid var(--border);
-      color: #64748b;
-      padding: 4px 10px;
-      font-size: 0.8rem;
-    }
-    .bookmark-btn.active {
-      background: #fef3c7;
-      border-color: #f59e0b;
-      color: #b45309;
-    }
-
-    .q-title {
-      font-size: 1.08rem;
-      font-weight: 700;
-      margin: 0 0 14px;
-      white-space: pre-line;
-    }
-
-    .q-box {
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-radius: 8px;
-      padding: 12px 14px;
-      margin-bottom: 16px;
-      font-size: 0.94rem;
-      white-space: pre-wrap;
-    }
-
-    pre.q-code {
-      background: var(--code-bg);
-      color: var(--code-text);
-      padding: 14px 16px;
-      border-radius: 10px;
-      overflow-x: auto;
-      font-family: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
-      font-size: 0.88rem;
-      line-height: 1.5;
-      margin: 0 0 16px;
-    }
-
-    .options-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .option-btn {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      text-align: left;
-      width: 100%;
-      padding: 13px 16px;
-      background: #fff;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.97rem;
-      font-weight: 500;
-      color: var(--text);
-      line-height: 1.5;
-    }
-    .option-btn:hover {
-      border-color: #93c5fd;
-      background: #f8fafc;
-    }
-
-    .opt-num {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #f1f5f9;
-      color: #334155;
-      font-size: 0.82rem;
-      font-weight: 700;
-      margin-top: 1px;
-    }
-
-    .option-btn.correct {
-      background: var(--correct-bg);
-      border-color: var(--correct-border);
-      color: var(--correct-text);
-      font-weight: 700;
-    }
-    .option-btn.correct .opt-num {
-      background: var(--correct-border);
-      color: #fff;
-    }
-
-    .option-btn.wrong {
-      background: var(--wrong-bg);
-      border-color: var(--wrong-border);
-      color: var(--wrong-text);
-    }
-    .option-btn.wrong .opt-num {
-      background: var(--wrong-border);
-      color: #fff;
-    }
-
-    /* Explanation Box */
-    .explanation-box {
-      margin-top: 20px;
-      padding: 16px 18px;
-      border-radius: 10px;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      display: none;
-    }
-    .explanation-box.visible { display: block; }
-
-    .exp-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-    .exp-status {
-      font-weight: 800;
-      font-size: 0.96rem;
-    }
-    .exp-status.ok { color: #059669; }
-    .exp-status.no { color: #dc2626; }
-    .exp-status.info { color: #2563eb; }
-
-    .exp-content {
-      font-size: 0.93rem;
-      color: #334155;
-      white-space: pre-wrap;
-      line-height: 1.65;
-    }
-
-    .exp-editor {
-      margin-top: 10px;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .exp-editor.visible { display: flex; }
-    .exp-editor textarea {
-      width: 100%;
-      min-height: 120px;
-      resize: vertical;
-      line-height: 1.5;
-    }
-
-    .nav-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 22px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
-
-    /* Sidebar OMR / Navigator */
-    .sidebar {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .omr-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 7px;
-      margin-top: 12px;
-    }
-
-    .omr-btn {
-      padding: 8px 0;
-      text-align: center;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: #fff;
-      font-size: 0.84rem;
-      font-weight: 700;
-      color: var(--text);
-      position: relative;
-    }
-    .omr-btn.current {
-      outline: 2.5px solid var(--primary);
-      outline-offset: 1px;
-    }
-    .omr-btn.solved-ok {
-      background: #d1fae5;
-      border-color: #10b981;
-      color: #065f46;
-    }
-    .omr-btn.solved-no {
-      background: #fee2e2;
-      border-color: #ef4444;
-      color: #991b1b;
-    }
-    .omr-btn.bookmarked::after {
-      content: '★';
-      position: absolute;
-      top: -4px;
-      right: 2px;
-      font-size: 0.65rem;
-      color: #f59e0b;
-    }
-
-    /* Modal */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.55);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 16px;
-    }
-    .modal-backdrop.open { display: flex; }
-
-    .modal {
-      background: #fff;
-      width: 100%;
-      max-width: 820px;
-      max-height: 90vh;
-      border-radius: 14px;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    }
-
-    .modal-header {
-      padding: 16px 20px;
-      background: #f8fafc;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .modal-header h2 {
-      margin: 0;
-      font-size: 1.1rem;
-    }
-
-    .modal-body {
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 10px;
-    }
-    .tab-btn {
-      background: #f1f5f9;
-      color: #475569;
-    }
-    .tab-btn.active {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 10px;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .form-group label {
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #334155;
-    }
-
-    .pdf-dropzone {
-      border: 2px dashed #93c5fd;
-      background: #eff6ff;
-      border-radius: 10px;
-      padding: 16px;
-      text-align: center;
-      transition: all 0.15s;
-    }
-    .pdf-dropzone.dragover {
-      background: #dbeafe;
-      border-color: var(--primary);
-    }
-
-    .preview-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 320px;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px;
-      background: #f8fafc;
-    }
-
-    .preview-item {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 0.86rem;
-    }
-
-    .ans-selector {
-      display: inline-flex;
-      gap: 4px;
-      margin-top: 6px;
-    }
-    .ans-chip {
-      padding: 2px 9px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: #fff;
-      font-size: 0.78rem;
-      font-weight: 700;
-    }
-    .ans-chip.selected {
-      background: #10b981;
-      color: #fff;
-      border-color: #10b981;
-    }
-
-    .set-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: #fff;
-    }
-
-    .hint-text {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .status-banner {
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 0.86rem;
-      font-weight: 600;
-      display: none;
-    }
-    .status-banner.info { display: block; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-    .status-banner.ok { display: block; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
-    .status-banner.err { display: block; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
-  </style>
-  <!-- PDF.js CDN for client-side text-based PDF parsing -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>전산</title>
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--tx:#1c2333;--sub:#6b7488;--bd:#dde2ec;--pri:#3b6cf6;--ok:#16a34a;--no:#dc2626;--okb:#dcfce7;--nob:#fee2e2;--star:#f59e0b}
+[data-theme=dark]{--bg:#12151c;--card:#1b202b;--tx:#e6e9f0;--sub:#8b93a7;--bd:#2c3342;--pri:#6c93ff;--ok:#4ade80;--no:#f87171;--okb:#12301f;--nob:#3a1818}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:-apple-system,"Noto Sans KR","Malgun Gothic",sans-serif;line-height:1.6}
+#app{max-width:760px;margin:0 auto;padding:12px 14px 60px}
+button{font:inherit;color:inherit;cursor:pointer}
+.bar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.bar h1{font-size:20px;margin:0;flex:1}
+.bar .mid{flex:1;text-align:center;font-weight:700}
+.ib{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:6px 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:15px;color:var(--sub)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--bd);background:var(--bg);border-radius:20px;padding:6px 14px;font-size:14px}
+.chip.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input[type=number],select,textarea{font:inherit;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px 10px}
+input[type=number]{width:90px}
+.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:700;background:var(--pri);color:#fff;width:100%;margin-top:8px}
+.btn.g{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.btn.w{background:var(--no)}
+.prog{height:6px;background:var(--bd);border-radius:4px;overflow:hidden;margin-bottom:12px}
+.prog i{display:block;height:100%;background:var(--pri)}
+.tag{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--sub)}
+.tag b{color:var(--pri)}
+.qn{font-size:22px;font-weight:800;margin:6px 0 4px}
+.qt{font-size:17px;white-space:pre-wrap;margin-bottom:10px}
+.star{background:none;border:0;font-size:26px;color:var(--sub);padding:0 4px}
+.star.on{color:var(--star)}
+.ch{display:flex;gap:10px;width:100%;text-align:left;padding:13px;border:1px solid var(--bd);background:var(--card);border-radius:12px;margin:8px 0;font-size:16px}
+.ch:hover{border-color:var(--pri)}
+.ch.ok{border-color:var(--ok);background:var(--okb)}
+.ch.no{border-color:var(--no);background:var(--nob)}
+.ex{border-left:4px solid var(--pri);background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:12px;white-space:pre-wrap}
+.ex textarea{width:100%;min-height:120px}
+.res{font-weight:800;margin-top:10px}
+.res.ok{color:var(--ok)}.res.no{color:var(--no)}
+.nav{display:flex;gap:10px}.nav .btn{margin-top:0}
+.ov{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.sheet{background:var(--card);width:100%;max-width:760px;max-height:75vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:8px;margin:12px 0}
+.cell{position:relative;border:1px solid var(--bd);background:var(--bg);border-radius:10px;padding:9px 0}
+.cell.ok{background:var(--okb);border-color:var(--ok)}
+.cell.no{background:var(--nob);border-color:var(--no)}
+.cell.cur{outline:2px solid var(--pri)}
+.cell.bm::after{content:"★";position:absolute;top:-2px;right:3px;font-size:11px;color:var(--star)}
+.big{font-size:40px;font-weight:800;text-align:center;margin:10px 0}
+.sm{font-size:13px;color:var(--sub)}
+</style>
 </head>
 <body>
-
-<header>
-  <div class="brand">
-    <h1>전산 cbt</h1>
-    <span class="badge-mode">학습형</span>
-  </div>
-  <div class="header-actions">
-    <button class="btn-primary" onclick="openManageModal('pdf')">+ PDF / 문제 추가</button>
-    <button class="btn-dark-outline" onclick="openManageModal('sets')">회차 · 백업 관리</button>
-    <button class="btn-dark-outline" onclick="resetCurrentProgress()">현재 필터 풀이 초기화</button>
-  </div>
-</header>
-
-<div class="container">
-  <!-- Filter Bar -->
-  <div class="filter-bar">
-    <div class="filter-group">
-      <select id="filterYear" onchange="applyFilters()">
-        <option value="ALL">전체 연도</option>
-      </select>
-      <select id="filterExam" onchange="applyFilters()">
-        <option value="ALL">전체 직렬</option>
-      </select>
-      <select id="filterSubject" onchange="applyFilters()">
-        <option value="ALL">전체 과목</option>
-      </select>
-      <select id="filterStatus" onchange="applyFilters()">
-        <option value="ALL">전체 문항</option>
-        <option value="WRONG">오답만 보기</option>
-        <option value="UNSOLVED">안 푼 문제</option>
-        <option value="BOOKMARK">북마크(★)</option>
-      </select>
-    </div>
-    <div class="stats-pill" id="statsDisplay">
-      진행: <strong>0 / 0</strong> · 정답률: <strong>0%</strong>
-    </div>
-  </div>
-
-  <!-- Main Question Panel -->
-  <main>
-    <div class="card" id="questionCard">
-      <div class="q-meta">
-        <div class="q-tags" id="qTags"></div>
-        <div style="display:flex; gap:6px;">
-          <button class="btn-outline" style="padding:4px 10px; font-size:0.8rem;" onclick="toggleShowAnswer()">정답/해설 보기</button>
-          <button class="bookmark-btn" id="bookmarkBtn" onclick="toggleBookmark()">☆ 북마크</button>
-        </div>
-      </div>
-
-      <div class="q-title" id="qTitle">문제를 불러오는 중...</div>
-      <div class="q-box" id="qBox" style="display:none;"></div>
-      <pre class="q-code" id="qCode" style="display:none;"></pre>
-
-      <div class="options-list" id="optionsList"></div>
-
-      <!-- Explanation & Editor -->
-      <div class="explanation-box" id="explanationBox">
-        <div class="exp-header">
-          <span class="exp-status" id="expStatus"></span>
-          <button class="btn-outline" style="padding:4px 10px; font-size:0.8rem;" onclick="toggleExpEditor()">풀이 편집 / 내 메모 추가</button>
-        </div>
-        <div class="exp-content" id="expContent"></div>
-
-        <div class="exp-editor" id="expEditor">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span class="hint-text">기존 풀이를 직접 고치거나 내 암기팁을 추가하세요.</span>
-            <button type="button" class="btn-outline" style="padding:3px 9px; font-size:0.78rem;" onclick="appendMyNoteBlock()">+ [내 풀이] 구분선 추가</button>
-          </div>
-          <textarea id="expTextarea"></textarea>
-          <div style="display:flex; gap:8px; justify-content:flex-end;">
-            <button type="button" class="btn-outline" onclick="toggleExpEditor(false)">취소</button>
-            <button type="button" class="btn-success" onclick="saveEditedExplanation()">해설 저장</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="nav-footer">
-        <button class="btn-outline" id="prevBtn" onclick="moveQuestion(-1)">← 이전 문제</button>
-        <span id="pageIndicator" style="font-size:0.9rem; font-weight:700; color:var(--muted);">0 / 0</span>
-        <button class="btn-primary" id="nextBtn" onclick="moveQuestion(1)">다음 문제 →</button>
-      </div>
-    </div>
-  </main>
-
-  <!-- Sidebar OMR -->
-  <aside class="sidebar">
-    <div class="card" style="padding:18px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <strong style="font-size:0.95rem;">문항 번호판</strong>
-        <span class="hint-text">단축키: 1~4, ←/→</span>
-      </div>
-      <div class="omr-grid" id="omrGrid"></div>
-    </div>
-  </aside>
-</div>
-
-<!-- Manage / PDF Import Modal -->
-<div class="modal-backdrop" id="manageModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>PDF 문제 등록 및 회차 관리</h2>
-      <button class="btn-outline" style="padding:4px 10px;" onclick="closeManageModal()">닫기 ✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="tabs">
-        <button class="tab-btn active" id="tabPdfBtn" onclick="switchModalTab('pdf')">1. 텍스트 PDF 파일로 등록</button>
-        <button class="tab-btn" id="tabTextBtn" onclick="switchModalTab('text')">2. 텍스트 직접 붙여넣기</button>
-        <button class="tab-btn" id="tabSetsBtn" onclick="switchModalTab('sets')">3. 등록된 회차 / 백업</button>
-      </div>
-
-      <div id="modalBanner" class="status-banner"></div>
-
-      <!-- TAB 1: PDF UPLOAD -->
-      <div id="panelPdf" style="display:flex; flex-direction:column; gap:14px;">
-        <div class="form-row">
-          <div class="form-group">
-            <label>연도</label>
-            <select id="pdfYear"></select>
-          </div>
-          <div class="form-group">
-            <label>직렬</label>
-            <select id="pdfExam">
-              <option value="국가직">국가직</option>
-              <option value="지방직">지방직</option>
-              <option value="군무원">군무원</option>
-              <option value="기출/모의">기출/모의</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>과목</label>
-            <select id="pdfSubject">
-              <option value="컴퓨터일반">컴퓨터일반</option>
-              <option value="정보보호론">정보보호론</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="pdf-dropzone" id="qPdfDropzone">
-            <div style="font-weight:700; margin-bottom:4px;">📄 문제지 PDF 파일 선택 (필수)</div>
-            <div class="hint-text" style="margin-bottom:10px;">텍스트가 선택되는 기출문제 PDF 파일 (1단/2단 자동 인식)</div>
-            <input type="file" id="qPdfInput" accept="application/pdf" onchange="handleQuestionPdfUpload(event)" />
-          </div>
-          <div class="pdf-dropzone" id="aPdfDropzone" style="border-color:#a7f3d0; background:#ecfdf5;">
-            <div style="font-weight:700; margin-bottom:4px;">✅ 정답표 PDF 파일 선택 (선택)</div>
-            <div class="hint-text" style="margin-bottom:10px;">정답표 PDF가 있으면 번호별 정답 자동 매핑</div>
-            <input type="file" id="aPdfInput" accept="application/pdf" onchange="handleAnswerPdfUpload(event)" />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>정답 직접 입력 (정답 PDF가 없거나 수정할 때: 예 2,3,2,4,1... 또는 23241...)</label>
-          <input type="text" id="pdfManualAnswers" placeholder="예: 2, 3, 2, 4, 1, 2, 1, 4, 4, 3..." oninput="applyManualAnswersToPreview()" />
-        </div>
-
-        <div id="pdfPreviewWrapper" style="display:none; flex-direction:column; gap:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong id="pdfPreviewCount">추출된 문제 미리보기 (0문항)</strong>
-            <span class="hint-text">정답 버튼(①~④)을 클릭해 정답을 지정/수정할 수 있습니다.</span>
-          </div>
-          <div class="preview-list" id="pdfPreviewList"></div>
-          <button class="btn-success" style="padding:11px; font-size:0.95rem;" onclick="commitParsedQuestions('pdf')">선택한 연도·과목으로 CBT에 등록하기</button>
-        </div>
-      </div>
-
-      <!-- TAB 2: TEXT PASTE -->
-      <div id="panelText" style="display:none; flex-direction:column; gap:12px;">
-        <div class="form-row">
-          <div class="form-group">
-            <label>연도</label>
-            <select id="txtYear"></select>
-          </div>
-          <div class="form-group">
-            <label>직렬</label>
-            <select id="txtExam">
-              <option value="국가직">국가직</option>
-              <option value="지방직">지방직</option>
-              <option value="군무원">군무원</option>
-              <option value="기출/모의">기출/모의</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>과목</label>
-            <select id="txtSubject">
-              <option value="컴퓨터일반">컴퓨터일반</option>
-              <option value="정보보호론">정보보호론</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>문제 텍스트 붙여넣기 (1. ... ① ... ② ... ③ ... ④ ... 형식)</label>
-          <textarea id="rawTextInput" style="min-height:170px;" placeholder="1. 다음 중 ...&#10;① 보기1&#10;② 보기2&#10;③ 보기3&#10;④ 보기4"></textarea>
-        </div>
-        <div class="form-group">
-          <label>정답 목록 (예: 2, 3, 2, 4, 1...)</label>
-          <input type="text" id="rawTextAnswers" placeholder="1번부터 순서대로 입력" />
-        </div>
-        <button class="btn-primary" onclick="parseAndRegisterRawText()">텍스트 분석 후 CBT에 등록</button>
-      </div>
-
-      <!-- TAB 3: SETS & BACKUP -->
-      <div id="panelSets" style="display:none; flex-direction:column; gap:14px;">
-        <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px; border-radius:10px; border:1px solid var(--border);">
-          <div>
-            <strong>전체 데이터 백업 / 복원</strong>
-            <div class="hint-text">브라우저 캐시 삭제에 대비해 등록한 문제와 내 풀이를 파일로 보관하세요.</div>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn-outline" onclick="exportBackupJson()">백업 파일 저장</button>
-            <label class="btn-outline" style="display:inline-flex; align-items:center; cursor:pointer; margin:0;">
-              백업 불러오기
-              <input type="file" accept=".json" style="display:none;" onchange="importBackupJson(event)" />
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <strong style="display:block; margin-bottom:8px;">등록된 연도 · 과목별 회차 목록</strong>
-          <div id="setsListContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
+<div id="app"></div>
 <script>
-// Configure PDF.js worker if loaded
-if (window.pdfjsLib) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-}
-
-// Default 20 Questions (Sample Set)
-const DEFAULT_QUESTIONS = [
-  {
-    id: "2024_국가직_컴퓨터일반_1",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 1,
-    question: "기억장치를 접근 속도가 빠른 것부터 순서대로 바르게 나열한 것은?",
-    options: [
-      "캐시 → 레지스터 → 주기억장치",
-      "레지스터 → 캐시 → 주기억장치",
-      "레지스터 → 주기억장치 → 캐시",
-      "주기억장치 → 캐시 → 레지스터"
-    ],
-    answer: 2,
-    explanation: "기억장치 계층 구조에서 접근 속도는 CPU 내부의 레지스터(Register)가 가장 빠르며, 그다음 캐시(Cache), 주기억장치(RAM), 보조기억장치 순입니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_2",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 2,
-    question: "CPU의 연산을 처리하기 위한 데이터의 기본 단위로서 CPU가 한 번에 처리할 수 있는 데이터 크기를 나타내는 것은?",
-    options: [
-      "비트(bit)",
-      "바이트(byte)",
-      "워드(word)",
-      "니블(nibble)"
-    ],
-    answer: 3,
-    explanation: "워드(Word)는 CPU가 한 번에 처리할 수 있는 명령어나 데이터의 기본 단위입니다. (니블=4비트, 바이트=8비트)"
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_3",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 3,
-    question: "특정 환경에서 선택 가능한 행동들 중 보상(reward)을 최대화하는 행동을 선택하는 머신러닝(machine learning) 기법은?",
-    options: [
-      "지도 학습(supervised learning)",
-      "강화 학습(reinforcement learning)",
-      "비지도 학습(unsupervised learning)",
-      "준지도 학습(semi-supervised learning)"
-    ],
-    answer: 2,
-    explanation: "강화 학습(Reinforcement Learning)은 에이전트가 주어진 환경에서 상태를 관찰하고 행동을 취한 뒤 얻는 보상(Reward)의 누적합을 최대화하도록 학습하는 기법입니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_4",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 4,
-    question: "10진수 연산 (－25 ＋ 4)를 2의 보수를 이용하여 계산한 결과를 2진수로 표현한 것은? (단, 저장 공간은 8비트로 한다)",
-    options: [
-      "00010101",
-      "10010101",
-      "11101010",
-      "11101011"
-    ],
-    answer: 4,
-    explanation: "-25 + 4 = -21입니다.
-① +21을 8비트 2진수로 표현: 00010101
-② 1의 보수: 11101010
-③ 2의 보수(+1): 11101011"
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_5",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 5,
-    question: "네트워크 시스템을 관리하기 위한 UDP 기반의 프로토콜은?",
-    options: [
-      "SNMP",
-      "SMTP",
-      "ICMP",
-      "RARP"
-    ],
-    answer: 1,
-    explanation: "SNMP(Simple Network Management Protocol)는 네트워크 장비 관리 및 모니터링을 위한 응용 계층 프로토콜로, 전송 계층에서 비연결형인 UDP(161/162번 포트)를 사용합니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_6",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 6,
-    question: "레지스터에 저장된 10진수 정수 29를 2비트만큼 논리적 우측 시프트(logical right shift)한 결과에 해당하는 10진수의 값은?",
-    options: [
-      "4",
-      "7",
-      "8",
-      "15"
-    ],
-    answer: 2,
-    explanation: "10진수 29 = 2진수 0001 1101입니다.
-우측으로 2비트 논리 시프트하면 최상위 비트에 0이 채워져 0000 0111이 되며, 10진수로 4 + 2 + 1 = 7입니다. (29 ÷ 4의 몫 = 7)"
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_7",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 7,
-    question: "다음 설명에 해당하는 소프트웨어 개발 프로세스 모델은?",
-    box: "초기 요구분석 후 프로토타입을 개발하기 이전에 위험 분석 단계를 거친다. 이렇게 만들어진 프로토타입을 사용자가 평가하고, 개발자는 추가 요구사항을 반영하여 다시 위험 분석을 거쳐 2차 프로토타입을 만든다. 이 과정을 반복하면서 사용자의 요구사항이 충분히 반영된 최종 제품을 완성해 나간다.",
-    options: [
-      "나선형 모델",
-      "폭포수 모델",
-      "CBD 모델",
-      "SPICE 모델"
-    ],
-    answer: 1,
-    explanation: "계획 수립 → 위험 분석(Risk Analysis) → 공학적 개발(프로토타입) → 고객 평가의 4단계를 반복하며 점진적으로 개발하는 방식은 나선형(Spiral) 모델입니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_8",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 8,
-    question: "메모리에 대한 설명으로 옳은 것만을 모두 고르면?",
-    box: "ㄱ. 플래시 메모리는 NAND형과 NOR형이 있다.
-ㄴ. SRAM은 DRAM에 비해 접근 속도가 빠른 편이다.
-ㄷ. ROM은 휘발성 메모리로 전원 없이 데이터를 유지할 수 없다.
-ㄹ. EPROM은 자외선 등을 사용하여 여러 번 저장된 내용을 지우고 다른 내용을 기록할 수 있다.",
-    options: [
-      "ㄱ, ㄴ",
-      "ㄴ, ㄷ",
-      "ㄷ, ㄹ",
-      "ㄱ, ㄴ, ㄹ"
-    ],
-    answer: 4,
-    explanation: "ㄷ은 틀렸습니다. ROM(Read Only Memory)은 전원이 꺼져도 데이터가 유지되는 비휘발성 메모리입니다. ㄱ, ㄴ, ㄹ은 모두 옳은 설명입니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_9",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 9,
-    question: "모듈의 응집도(cohesion) 및 결합도(coupling)에 대한 설명으로 옳지 않은 것은?",
-    options: [
-      "한 모듈이 다른 모듈 내부를 직접 참조하는 경우는 내용(content) 결합도에 해당한다.",
-      "응집도는 하나의 모듈 내에서 구성 요소들이 얼마나 밀접하게 관련되어 있는지를 나타낸다.",
-      "모듈을 구성하는 한 요소의 출력이 다음 요소의 입력으로 사용되는 경우는 순차적(sequential) 응집도에 해당한다.",
-      "레코드, 구조체 또는 객체와 같은 복잡한 데이터 구조를 모듈 인터페이스를 통해 주고받는 경우는 데이터(data) 결합도에 해당한다."
-    ],
-    answer: 4,
-    explanation: "④ 배열, 레코드, 구조체, 객체 등 자료구조를 매개변수로 전달하는 경우는 데이터(자료) 결합도가 아니라 스탬프(Stamp) 결합도에 해당합니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_10",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 10,
-    question: "다음 C 프로그램의 출력 결과는?",
-    code: `#include <stdio.h>
-void func(int *p, int *q) {
-  if (p > q) return;
-  printf("%d ", *p + *q);
-  func(p + 1, q - 1);
-}
-int main(void) {
-  int a[] = { 3, 1, 4, 1, 5 };
-  func(a, a + 4);
-  return 0;
-}`,
-    options: [
-      "6 2 8",
-      "8 2 6",
-      "8 2 8",
-      "8 8 2"
-    ],
-    answer: 3,
-    explanation: "1) p=&a[0](3), q=&a[4](5) → 3+5 = 8 출력
-2) p=&a[1](1), q=&a[3](1) → 1+1 = 2 출력
-3) p=&a[2](4), q=&a[2](4) → 4+4 = 8 출력
-4) p=&a[3], q=&a[1] → p > q 이므로 종료. 결과: 8 2 8"
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_11",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 11,
-    question: "데이터베이스 뷰(view)에 대한 설명으로 옳지 않은 것은?",
-    options: [
-      "뷰를 이용하여 다른 뷰를 정의할 수 있다.",
-      "뷰를 제거할 때는 DELETE VIEW 명령을 사용한다.",
-      "뷰는 다른 테이블에서 유도된 가상 테이블이다.",
-      "뷰를 이용하여 사용자별로 필요한 데이터만 선별하여 보여줄 수 있다."
-    ],
-    answer: 2,
-    explanation: "② SQL에서 뷰(View)를 삭제할 때는 DELETE VIEW가 아니라 DROP VIEW 뷰이름; 명령을 사용합니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_12",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 12,
-    question: "2진 소수로 변환하면 무한 순환 소수가 되는 10진 소수는?",
-    options: [
-      "0.25",
-      "0.375",
-      "0.4",
-      "0.5"
-    ],
-    answer: 3,
-    explanation: "10진 소수가 유한 2진 소수가 되려면 기약분수로 나타냈을 때 분모가 2의 거듭제곱 형태여야 합니다.
-• 0.25 = 1/4 = 0.01(2)
-• 0.375 = 3/8 = 0.011(2)
-• 0.4 = 2/5 → 분모에 5가 있으므로 0.01100110...(2) 무한 순환 소수
-• 0.5 = 1/2 = 0.1(2)"
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_13",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 13,
-    question: "다음 릴레이션에서 속성 A ～ D의 함수 종속을 화살표(→)로 표현할 때 옳은 것은? (단, 아래 투플을 기준으로 판단하며, 새로운 투플은 추가되지 않는다고 가정한다)",
-    code: `A   B   C   D
-1   2   7   7
-2   8   5   6
-2   6   5   6
-4   8   7   2`,
-    options: [
-      "A → B",
-      "B → C",
-      "{A, D} → B",
-      "{C, D} → A"
-    ],
-    answer: 4,
-    explanation: "① A=2일 때 B가 8, 6으로 다르므로 A → B 성립 안 함.
-② B=8일 때 C가 5, 7로 다르므로 B → C 성립 안 함.
-③ {A, D}=(2,6)일 때 B가 8, 6으로 다르므로 성립 안 함.
-④ {C, D}의 모든 쌍 (7,7), (5,6), (7,2)이 각각 유일한 A값(1, 2, 4)을 결정하므로 {C, D} → A 성립."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_14",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 14,
-    question: "FIFO 페이지 교체 알고리즘을 사용하는 가상메모리에서 프로세스 P가 다음과 같은 페이지 번호 순서대로 페이지에 접근할 때, 페이지 부재(page-fault) 발생 횟수는? (단, 프로세스 P가 사용하는 페이지 프레임은 총 3개이고, 빈 상태에서 시작한다)",
-    box: "8  1  2  3  1  4  5  3  4  1  4  3",
-    options: [
-      "6회",
-      "7회",
-      "8회",
-      "9회"
-    ],
-    answer: 4,
-    explanation: "프레임 3개 FIFO 추적:
-8(F)→[8]
-1(F)→[8,1]
-2(F)→[8,1,2]
-3(F, 8교체)→[1,2,3]
-1(Hit)→[1,2,3]
-4(F, 1교체)→[2,3,4]
-5(F, 2교체)→[3,4,5]
-3(Hit)→[3,4,5]
-4(Hit)→[3,4,5]
-1(F, 3교체)→[4,5,1]
-4(Hit)→[4,5,1]
-3(F, 5교체)→[4,1,3]
-총 페이지 부재(F) = 8회? 다시 확인: 8(1), 1(2), 2(3), 3(4), 4(5), 5(6), 1(7), 3(8) → 8회! 잠깐: 8,1,2,3(4회), 4(5회), 5(6회), 1(7회), 3(8회) → 정답 ③ 8회입니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_15",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 15,
-    question: "IPv4 주소의 첫 번째 바이트와 각 바이트에 해당하는 클래스가 옳게 짝지어지지 않은 것은?",
-    options: [
-      "00010011 － Class C",
-      "01001010 － Class A",
-      "10010011 － Class B",
-      "11100110 － Class D"
-    ],
-    answer: 1,
-    explanation: "IPv4 첫 번째 옥텟 최상위 비트 기준:
-• 0xxxxxxx → Class A (① 00010011은 0으로 시작하므로 Class A)
-• 10xxxxxx → Class B
-• 110xxxxx → Class C
-• 1110xxxx → Class D"
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_16",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 16,
-    question: "다음 Java 프로그램의 출력 결과는?",
-    code: `class ClassA {
-  ClassA() {
-    System.out.print("1");
-  }
-  static {
-    System.out.print("4");
-  }
-}
-public class ClassB extends ClassA {
-  ClassB() {
-    System.out.print("2");
-  }
-  public static void main(String[] args) {
-    System.out.print("3");
-    new ClassB();
-  }
-}`,
-    options: [
-      "32",
-      "432",
-      "3214",
-      "4312"
-    ],
-    answer: 4,
-    explanation: "1) ClassB 실행 시 상위 클래스 ClassA가 먼저 로드되면서 static 블록 실행 → '4' 출력
-2) main() 메서드 시작 → '3' 출력
-3) new ClassB() 호출 시 부모 생성자 ClassA() 먼저 실행 → '1' 출력
-4) 자식 생성자 ClassB() 실행 → '2' 출력
-최종 출력: 4312"
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_17",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 17,
-    question: "교착상태(deadlock)에 대한 설명으로 옳은 것만을 모두 고르면?",
-    box: "ㄱ. 교착상태 발생의 필요조건은 상호 배제, 선점, 점유와 대기, 선형 대기이다.
-ㄴ. 프로세스를 강제로 종료해서 교착상태 문제를 처리하는 것은 교착상태 회복 기법에 해당한다.
-ㄷ. 어떤 제약을 가하지 않고 자원 할당 그래프를 지속적으로 모니터링하면서 교착상태 발생 여부를 살펴보는 것은 교착상태 예방 기법에 해당한다.
-ㄹ. 은행원 알고리즘(banker’s algorithm) 등을 이용하여 안전(safe) 상태를 유지할 수 있는 범위 내에서 자원을 할당하는 것은 교착상태 회피 기법에 해당한다.",
-    options: [
-      "ㄱ, ㄴ",
-      "ㄱ, ㄷ",
-      "ㄴ, ㄹ",
-      "ㄷ, ㄹ"
-    ],
-    answer: 3,
-    explanation: "ㄱ. 교착상태 4가지 필요조건은 상호 배제, '비선점', 점유와 대기, '환형 대기'입니다.
-ㄷ. 자원 할당 그래프 모니터링 및 주기적 검사는 '탐지(Detection)' 기법입니다.
-ㄴ, ㄹ만 옳은 설명입니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_18",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 18,
-    question: "다음 파이썬 코드로 작성된 partition() 함수를 이용하여, 주어진 배열을 퀵 정렬(quick sort)로 오름차순 정렬하고자 한다. 정렬 과정에서 단계별 정렬 순서로 나타날 수 없는 것은? (단, 피벗(pivot)은 정렬하고자 하는 대상의 마지막 원소로 선택한다)",
-    code: `def partition(A, first, last):
-    p = A[last]
-    low = first
-    high = last
-    while low < high:
-        while p > A[low] and low < high:
-            low += 1
-        while p <= A[high] and low < high:
-            high -= 1
-        if low < high:
-            A[low], A[high] = A[high], A[low]
-    A[low], A[last] = A[last], A[low]
-    return low
-
-# 배열: 7 3 2 19 13 5 11 17`,
-    options: [
-      "2, 3, 5, 7, 13, 11, 17, 19",
-      "2, 3, 5, 11, 7, 13, 17, 19",
-      "2, 3, 5, 11, 13, 7, 17, 19",
-      "7, 3, 2, 11, 13, 5, 17, 19"
-    ],
-    answer: 3,
-    explanation: "1단계(pivot=17): 19와 11 교환 후 19와 17 교환 → [7, 3, 2, 11, 13, 5, 17, 19] (보기 ④ 등장)
-2단계 왼쪽 부분배열 [7, 3, 2, 11, 13, 5] (pivot=5): 7과 5 교환 → [5, 3, 2, 11, 13, 7, 17, 19]
-3단계 오른쪽 부분배열 [3, 2, 11, 13, 7] (pivot=7): 11과 7 교환 → [5, 3, 2, 7, 13, 11, 17, 19]
-4단계 [5, 3, 2] (pivot=2) → [2, 3, 5, 7, 13, 11, 17, 19] (보기 ① 등장)
-5단계 [13, 11] (pivot=11) → [2, 3, 5, 7, 11, 13, 17, 19]
-보기 ③의 [2, 3, 5, 11, 13, 7, 17, 19]는 나타날 수 없습니다."
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_19",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 19,
-    question: "디스크 스케줄링 기법 중 SSTF를 사용하여 다음과 같은 작업 대기 큐(디스크 큐)의 작업을 처리하고자 하는 경우, 처리되는 트랙의 순서를 바르게 나열한 것은? (단, 추가 I/O 요청은 없다고 가정한다)",
-    box: "○ 작업 대기 큐: 15, 4, 8, 120, 65, 70, 105
-○ 헤드 시작 위치: 50",
-    options: [
-      "65 → 70 → 105 → 120 → 15 → 8 → 4",
-      "65 → 70 → 120 → 105 → 15 → 8 → 4",
-      "70 → 65 → 105 → 120 → 15 → 8 → 4",
-      "70 → 65 → 120 → 15 → 8 → 4 → 105"
-    ],
-    answer: 1,
-    explanation: "SSTF(Shortest Seek Time First)는 현재 헤드에서 탐색 거리가 가장 짧은 요청부터 처리합니다.
-50 → 65(거리15) → 70(거리5) → 105(거리35) → 120(거리15) → 15(거리105) → 8(거리7) → 4(거리4)"
-  },
-  {
-    id: "2024_국가직_컴퓨터일반_20",
-    year: "2024",
-    exam: "국가직",
-    subject: "컴퓨터일반",
-    num: 20,
-    question: "다음 C 프로그램의 출력 결과는?",
-    code: `#include <stdio.h>
-void rotate(int *a, int n, int k) {
-  k %= n;
-  while (k--) {
-    int first = a[0];
-    int i;
-    for (i = 0; i < n - 1; i++) {
-      a[i] = a[i + 1];
-    }
-    a[n - 1] = first;
-  }
-}
-int main(void) {
-  int arr[] = {1, 2, 3, 4, 5};
-  rotate(arr, 5, 7);
-  int i;
-  for (i = 0; i < 5; i++) {
-    printf("%d ", arr[i]);
-  }
-  return 0;
-}`,
-    options: [
-      "1 2 3 4 5",
-      "3 4 5 1 2",
-      "4 5 1 2 3",
-      "5 1 2 3 4"
-    ],
-    answer: 2,
-    explanation: "k = 7 % 5 = 2이므로 배열을 왼쪽으로 2칸 회전시킵니다.
-초기: {1, 2, 3, 4, 5}
-1회 회전: {2, 3, 4, 5, 1}
-2회 회전: {3, 4, 5, 1, 2}"
-  }
+/* ========= 기본 문제 (예시) =========
+   형식: {id, subject, round, q, choices:[...], answer:정답번호(1부터), exp:풀이}
+   문제를 추가하려면 아래 배열에 같은 형식으로 넣거나, 홈 화면의 '문제 불러오기(JSON)'를 사용하세요. */
+const BASE=[
+{id:"lg26-01",subject:"컴퓨터구조",round:"2026 지방직 9급",q:"다음 설명에 해당하는 문자 데이터 표현은?\n\n전 세계 언어를 하나의 코드 체계 안으로 통합하기 위해 만들어진 코드로서 2바이트를 사용해서 각 국가의 언어를 표현할 수 있다.",choices:["Unicode","ASCII 코드","BCD 코드","EBCDIC 코드"],answer:1,exp:"Unicode: 전 세계 문자를 통합한 2바이트 코드 체계.\nASCII는 7비트(영문), BCD는 4비트(숫자), EBCDIC은 8비트(IBM)."},
+{id:"lg26-02",subject:"네트워크",round:"2026 지방직 9급",q:"TELNET보다 안전한 원격 접속 기능을 제공하는 서비스는?",choices:["SSH(Secure SHell)","VoIP(Voice over IP)","SMTP(Simple Mail Transfer Protocol)","DHCP(Dynamic Host Configuration Protocol)"],answer:1,exp:"SSH는 암호화된 원격 접속(22번 포트). TELNET은 평문 전송이라 보안에 취약."},
+{id:"lg26-03",subject:"네트워크",round:"2026 지방직 9급",q:"MAC(Media Access Control) 주소를 표현하는 데 필요한 16진수 개수는?",choices:["4","8","12","16"],answer:3,exp:"MAC 주소는 48비트. 16진수 1자리=4비트이므로 48÷4=12개. (예: AA-BB-CC-DD-EE-FF)"},
+{id:"lg26-04",subject:"컴퓨터구조",round:"2026 지방직 9급",q:"다음 설명에 해당하는 캐시(cache) 기억장치의 교체 알고리즘은?\n\n캐시 안에 가장 오래된 블록을 교체하는 방식으로 쉽게 구현할 수 있으나 적중률 면에서는 높은 효율을 보이지 않는다.",choices:["FIFO(First-In First-Out)","LFU(Least Frequently Used)","LRU(Least Recently Used)","Random"],answer:1,exp:"가장 오래된(먼저 들어온) 블록 교체 = FIFO.\nLRU=가장 오래 사용 안 한 것, LFU=사용 빈도 가장 낮은 것."},
+{id:"lg26-05",subject:"컴퓨터구조",round:"2026 지방직 9급",q:"10진수 +5를 1의 보수(1’s complement)로 변환하면? (단, 저장 공간은 8비트로 한다)",choices:["11111110","11111101","11111010","11111011"],answer:3,exp:"+5 = 00000101 → 모든 비트 반전 → 11111010.\n1의 보수 = 비트 반전, 2의 보수 = 반전 + 1."},
+{id:"lg26-06",subject:"자료구조",round:"2026 지방직 9급",q:"순차 탐색(sequential search)과 이진 탐색(binary search)에 대한 설명으로 옳은 것은?",choices:["순차 탐색의 시간 복잡도는 ‘평균의 경우’ ____ 이다. (원문 수식 누락)","이진 탐색은 재귀(recursive) 호출 방식으로 구현 가능하다.","순차 탐색은 입력 데이터가 정렬되어 있을 때 원하는 값을 효율적으로 탐색하는 알고리즘이다.","이진 탐색은 입력 데이터의 처음부터 끝까지 차례대로 비교하며 원하는 값을 탐색하는 알고리즘이다."],answer:2,exp:"이진 탐색: 정렬된 데이터에서 중간값과 비교하며 절반씩 줄임 → 반복문/재귀 모두 구현 가능, O(log n).\n순차 탐색: 처음부터 차례로 비교, 정렬 필요 없음."},
+{id:"lg26-07",subject:"네트워크",round:"2026 지방직 9급",q:"TCP/IP 프로토콜 계층 구조에서 응용 계층 프로토콜이 아닌 것은?",choices:["FTP","RIP","HTTP","SMTP"],answer:2,exp:"RIP는 라우팅 프로토콜(거리 벡터 방식)로 네트워크(인터넷) 계층 쪽으로 분류.\nFTP·HTTP·SMTP는 응용 계층."},
+{id:"lg26-08",subject:"데이터베이스",round:"2026 지방직 9급",q:"관계형 데이터 모델에서 릴레이션(relation)에 대한 설명으로 옳은 것은?",choices:["한 릴레이션에서 튜플(tuple)의 중복을 허용한다.","속성(attribute)은 원자 값(atomic value)을 가진다.","한 릴레이션에 포함된 튜플 간의 순서는 의미가 있다.","한 릴레이션을 구성하는 속성 간의 순서는 의미가 있다."],answer:2,exp:"릴레이션 특징: 튜플 중복 불가, 튜플 순서 무의미, 속성 순서 무의미, 속성값은 원자값."},
+{id:"lg26-09",subject:"컴퓨터구조",round:"2026 지방직 9급",q:"중앙처리장치의 레지스터(register)가 아닌 것은?",choices:["MBR(Memory Buffer Register)","PC(Program Counter)","IR(Instruction Register)","ALU(Arithmetic and Logical Unit)"],answer:4,exp:"ALU는 연산 장치이지 레지스터가 아님. (MBR, PC, IR, MAR, AC 등이 레지스터)"},
+{id:"lg26-10",subject:"네트워크",round:"2026 지방직 9급",q:"OSI 7 계층과 계층별로 사용하는 네트워크 장비를 옳게 짝지은 것은?",choices:["전송 계층 － 허브(hub)","데이터 링크 계층 － 라우터(router)","데이터 링크 계층 － 브릿지(bridge)","데이터 링크 계층 － 리피터(repeater)"],answer:3,exp:"물리: 허브·리피터 / 데이터링크: 브리지·스위치 / 네트워크: 라우터 / 전송 이상: 게이트웨이."},
+{id:"lg26-11",subject:"인공지능",round:"2026 지방직 9급",q:"기계 학습의 학습 유형인 비지도 학습(unsupervised learning)에 대한 설명으로 옳은 것은?",choices:["핵심 개념은 에이전트, 환경, 상태, 액션, 보상 등이다.","군집화(clustering)를 사용할 수 없다.","학습 알고리즘이 누적 보상을 최대화하는 방향으로 진행된다.","레이블이 없는 학습용 데이터만을 대상으로 학습 알고리즘이 스스로 패턴을 발견한다."],answer:4,exp:"비지도 학습: 정답(레이블) 없이 패턴 발견 (군집화, 차원 축소).\n①③은 강화학습 설명."},
+{id:"lg26-12",subject:"프로그래밍",round:"2026 지방직 9급",q:"다음 C 프로그램의 출력 결과는?\n\n#include <stdio.h>\n#include <string.h>\nint main(void) {\n  char s[] = \"COMPUTER\";\n  char* p = s + 2;\n  *(p + 3) = 'X';\n  printf(\"%s\\n\", s);\n  printf(\"%zu\\n\", strlen(p));\n  return 0;\n}",choices:["COMXUTER 5","COMPUXER 5","COMXUTER 6","COMPUXER 6"],answer:4,exp:"p = s+2 → \"MPUTER\"를 가리킴. *(p+3) = s[5] = 'T' → 'X' 로 변경 → \"COMPUXER\".\nstrlen(p) = \"MPUXER\" = 6."},
+{id:"lg26-13",subject:"운영체제",round:"2026 지방직 9급",q:"(가), (나)에 들어갈 용어를 바르게 연결한 것은?\n\n(가) 시스템 호출은 실행 중인 프로세스로부터 새로운 프로세스를 복사하는 함수로 기존 프로세스는 부모 프로세스, 새로 생성된 프로세스는 자식 프로세스가 된다. (가) 를 이용해 생성된 자식 프로세스에게는 (나) 을 반환한다.",choices:["(가) exec()  (나) 0","(가) exec()  (나) 1","(가) fork()  (나) 0","(가) fork()  (나) 1"],answer:3,exp:"fork(): 프로세스 복사. 자식에게는 0, 부모에게는 자식의 PID를 반환.\nexec(): 현재 프로세스를 새 프로그램으로 교체."},
+{id:"lg26-14",subject:"자료구조",round:"2026 지방직 9급",q:"스택(stack)과 큐(queue)에 대한 설명으로 옳은 것은?",choices:["스택은 먼저 삽입된 데이터가 먼저 삭제되는 FIFO(First-In First-Out) 구조이다.","큐는 나중에 삽입된 데이터가 먼저 삭제되는 LIFO(Last-In First-Out) 구조이다.","시스템 스택은 프로그램 실행 시 함수의 호출과 복귀에 따른 실행 순서를 관리할 수 있다.","큐는 배열(array)을 사용하여 구현할 수 없다."],answer:3,exp:"스택=LIFO, 큐=FIFO. 함수 호출/복귀는 시스템(호출) 스택으로 관리. 큐도 배열(원형 큐)로 구현 가능."},
+{id:"lg26-15",subject:"컴퓨터구조",round:"2026 지방직 9급",q:"다음에서 설명하는 시스템 버스(bus) 중재 방식은?\n\n○ 버스 중재기가 각 버스 마스터들이 버스 사용을 요구하는지 주기적으로 검사하여 버스 사용 여부를 결정한다.\n○ 하드웨어 방식과 소프트웨어 방식으로 구분된다.",choices:["병렬","직렬","분산","폴링"],answer:4,exp:"주기적으로 검사(poll)하여 결정 = 폴링 방식."},
+{id:"lg26-16",subject:"운영체제",round:"2026 지방직 9급",q:"프로세스 도착 시간과 실행 시간은 다음과 같다. FCFS(First-Come First-Served) 스케줄링 알고리즘을 사용하였을 경우, P1, P2, P3, P4의 반환 시간에 대한 평균은?\n\n프로세스 / 도착 시간 / 실행 시간\nP1 / 0 / 3\nP2 / 2 / 8\nP3 / 5 / 4\nP4 / 8 / 3",choices:["6","8","10","12"],answer:2,exp:"실행 순서: P1(0~3), P2(3~11), P3(11~15), P4(15~18).\n반환시간 = 종료 − 도착 → 3, 9, 10, 10 → 합 32 ÷ 4 = 8."},
+{id:"lg26-17",subject:"인공지능",round:"2026 지방직 9급",q:"딥러닝에 대한 설명으로 옳지 않은 것은?",choices:["딥러닝 모델은 2개 이상의 은닉층을 가질 수 있으며 음성 인식, 자연어 처리 등에 활용된다.","합성곱 계층(convolutional layer)은 이미지에 대한 특징 정보를 추출한다.","LSTM(Long Short-Term Memory)은 장기 및 단기 메모리 기능을 포함하는 합성곱 신경망(convolutional neural network)이다.","순환 신경망(recurrent neural network)은 시간적으로 연속성이 있는 데이터를 처리하기 위한 인공 신경망이다."],answer:3,exp:"LSTM은 합성곱 신경망(CNN)이 아니라 순환 신경망(RNN)의 개선 모델 (장기 의존성 문제 해결)."},
+{id:"lg26-18",subject:"프로그래밍",round:"2026 지방직 9급",q:"다음 Java 프로그램의 실행 결과는?\n\nclass Main {\n  public static void div(double a, double b){\n    try{\n      System.out.println(a / b);\n    }catch(ArithmeticException e){\n      System.out.println(\"divide by zero\");\n    }\n  }\n  public static void main(String args[]) {\n    div(3, 2);\n    div(2, 0);\n  }\n}",choices:["1  Infinity","1.5  Infinity","1  divide by zero","1.5  divide by zero"],answer:2,exp:"매개변수가 double이라 3/2 = 1.5. 실수 나눗셈은 0으로 나눠도 ArithmeticException이 아니라 Infinity가 출력됨.\n(정수 나눗셈일 때만 예외 발생)"},
+{id:"lg26-19",subject:"운영체제",round:"2026 지방직 9급",q:"다중 스레드(multithreading) 모델에 대한 설명으로 옳은 것만을 모두 고른 것은?\n\nㄱ. 스레드는 사용자 스레드와 커널 스레드가 있다.\nㄴ. 일대일 모델은 다중 처리기에서 다중 스레드가 병렬로 수행되는 것을 허용하지 않는다.\nㄷ. 다대일 모델에서는 프로세스에 속한 하나의 스레드가 입출력 작업을 위해 대기 상태에 들어가도 나머지 스레드는 계속 실행된다.",choices:["ㄱ","ㄱ, ㄴ","ㄱ, ㄷ","ㄴ, ㄷ"],answer:1,exp:"ㄴ 일대일 모델은 병렬 수행 허용. ㄷ 다대일 모델은 한 스레드가 블록되면 프로세스 전체가 블록됨."},
+{id:"lg26-20",subject:"소프트웨어공학",round:"2026 지방직 9급",q:"다음 설명에 해당하는 디자인 패턴은?\n\n○ 객체를 오직 하나만 생성한다.\n○ 외부에서 접근하는 것을 통제하기 위해 생성자를 private으로 선언한다.",choices:["Adapter 패턴","Composite 패턴","Singleton 패턴","Factory method 패턴"],answer:3,exp:"Singleton: 인스턴스를 하나만 생성, 생성자를 private으로 선언하고 getInstance()로 접근."}
 ];
-// Fix Q14 answer index to match explanation (8회 -> option 3)
-DEFAULT_QUESTIONS[13].answer = 3;
 
-const STORAGE_KEYS = {
-  QUESTIONS: 'jeonsan_cbt_questions_v2',
-  PROGRESS: 'jeonsan_cbt_progress_v2',
-  BOOKMARKS: 'jeonsan_cbt_bookmarks_v2'
-};
+/* ========= 유틸/저장소 ========= */
+const $=s=>document.querySelector(s);
+const ld=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const NUM=["①","②","③","④","⑤","⑥"];
 
-let allQuestions = [];
-let filteredQuestions = [];
-let currentIndex = 0;
-let userProgress = {}; // { [id]: selectedOption1to4 }
-let userBookmarks = {}; // { [id]: true }
-let parsedPdfCandidates = [];
+let extra=ld('cbt_extra',[]),wrong=ld('cbt_wrong',{}),bm=ld('cbt_bm',{}),notes=ld('cbt_notes',{});
+let sess=ld('cbt_sess',null),theme=ld('cbt_theme',matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+let ALL=[],QM={};
+function build(){const m=new Map();[...BASE,...extra].forEach(q=>m.set(q.id,q));ALL=[...m.values()];QM=Object.fromEntries(ALL.map(q=>[q.id,q]))}
+build();
+let view='home',selSub=null,src='all',cnt=20,rnd=true,editing=false,navOpen=false;
+const subjects=()=>[...new Set(ALL.map(q=>q.subject))];
+const setTheme=()=>document.documentElement.setAttribute('data-theme',theme);
+setTheme();
+const toggleTheme=()=>{theme=theme=='dark'?'light':'dark';sv('cbt_theme',theme);setTheme();render()};
+const saveSess=()=>sv('cbt_sess',sess);
 
-function initApp() {
-  populateYearSelects();
-  loadStateFromStorage();
-  refreshFilterDropdowns();
-  applyFilters();
-  setupKeyboardShortcuts();
+/* ========= 홈 ========= */
+function pool(){return ALL.filter(q=>selSub.has(q.subject)&&(src=='all'||(src=='wrong'&&wrong[q.id])||(src=='bm'&&bm[q.id])))}
+function home(){
+  if(!selSub)selSub=new Set(subjects());
+  const subs=subjects(),p=pool().length;
+  if(cnt>p)cnt=Math.max(p,1);
+  const can=sess&&!sess.done&&sess.ids.some(i=>QM[i]);
+  $('#app').innerHTML=`
+  <div class="bar"><h1>전산</h1><button class="ib" onclick="toggleTheme()">${theme=='dark'?'☀️':'🌙'}</button></div>
+  ${can?`<button class="btn" style="margin:0 0 12px" onclick="resume()">▶ 이어서 풀기 (${sess.i+1} / ${sess.ids.length})</button>`:''}
+  <div class="card"><h3>과목 선택</h3><div class="chips">
+    <button class="chip ${selSub.size==subs.length?'on':''}" onclick="allSub()">전체</button>
+    ${subs.map((s,i)=>`<button class="chip ${selSub.has(s)?'on':''}" onclick="togSub(${i})">${esc(s)} (${ALL.filter(q=>q.subject==s).length})</button>`).join('')}
+  </div></div>
+  <div class="card"><h3>문제 범위</h3><div class="chips">
+    ${[['all','전체'],['wrong',`틀린 문제 (${Object.keys(wrong).filter(i=>QM[i]).length})`],['bm',`북마크 (${Object.keys(bm).filter(i=>QM[i]).length})`]].map(([k,l])=>`<button class="chip ${src==k?'on':''}" onclick="setSrc('${k}')">${l}</button>`).join('')}
+  </div></div>
+  <div class="card"><h3>문제 수 / 순서</h3><div class="row">
+    <input type="number" id="cnt" min="1" max="${p}" value="${cnt}" onchange="cnt=+this.value"> 문제 <span class="sm">(최대 ${p})</span>
+    <label><input type="checkbox" id="rnd" ${rnd?'checked':''} onchange="rnd=this.checked"> 랜덤</label>
+  </div></div>
+  <button class="btn" onclick="startNew()" ${p?'':'disabled'}>풀이 시작</button>
+  <div class="card" style="margin-top:16px"><h3>데이터 관리</h3>
+    <div class="row"><button class="ib" onclick="$('#file').click()">문제 불러오기(JSON)</button>
+    <button class="ib" onclick="exportData()">백업 내보내기</button>
+    <button class="ib" onclick="resetAll()">기록 초기화</button></div>
+    <input type="file" id="file" accept=".json" hidden onchange="impFile(event)">
+    <p class="sm">풀이 수정·북마크·오답 기록은 이 브라우저에 저장됩니다. 다른 기기에서 쓰려면 백업을 내보내고 불러오세요.</p>
+  </div>`;
+}
+function togSub(i){const s=subjects()[i];selSub.has(s)?selSub.delete(s):selSub.add(s);if(!selSub.size)selSub.add(s);render()}
+function allSub(){selSub=new Set(subjects());render()}
+function setSrc(k){src=k;render()}
+function startNew(){
+  cnt=Math.max(1,+$('#cnt').value||1);
+  let l=pool();if(rnd)l=shuffle(l);
+  start(l.slice(0,cnt).map(q=>q.id));
+}
+function start(ids){sess={ids,ans:{},i:0,done:false};saveSess();view='quiz';editing=false;navOpen=false;render();scrollTo(0,0)}
+function resume(){sess.ids=sess.ids.filter(i=>QM[i]);view='quiz';render()}
+
+/* ========= 풀이 ========= */
+function quiz(){
+  const id=sess.ids[sess.i],q=QM[id],n=sess.ids.length,a=sess.ans[id],done=a!=null;
+  const exp=notes[id]!=null?notes[id]:(q.exp||'');
+  $('#app').innerHTML=`
+  <div class="bar"><button class="ib" onclick="goHome()">홈</button>
+    <div class="mid">${sess.i+1} / ${n}</div>
+    <button class="ib" onclick="navOpen=true;render()">번호</button>
+    <button class="ib" onclick="toggleTheme()">${theme=='dark'?'☀️':'🌙'}</button></div>
+  <div class="prog"><i style="width:${(Object.keys(sess.ans).length/n)*100}%"></i></div>
+  <div class="card">
+    <div class="tag"><span><b>${esc(q.subject)}</b> · ${esc(q.round||'')}</span>
+      <button class="star ${bm[id]?'on':''}" onclick="togBm()" title="북마크">${bm[id]?'★':'☆'}</button></div>
+    <div class="qn">Q${sess.i+1}.</div>
+    <div class="qt">${esc(q.q)}</div>
+    ${q.choices.map((c,i)=>`<button class="ch ${done?(i+1==q.answer?'ok':(i+1==a?'no':'')):''}" onclick="pick(${i+1})"><b>${NUM[i]}</b><span>${esc(c)}</span></button>`).join('')}
+    ${done?`<div class="res ${a==q.answer?'ok':'no'}">${a==q.answer?'⭕ 정답입니다!':'❌ 오답 — 정답: '+NUM[q.answer-1]}</div>
+    <div class="ex">${editing?`<textarea id="exta">${esc(exp)}</textarea><div class="row" style="margin-top:8px"><button class="ib" onclick="saveExp()">저장</button><button class="ib" onclick="editing=false;render()">취소</button></div>`
+      :`<b>풀이</b> <button class="ib" style="padding:2px 8px;font-size:12px" onclick="editing=true;render()">✏️ 수정</button>\n${esc(exp)||'<span class="sm">풀이가 없습니다. 수정 버튼으로 암기팁을 추가하세요.</span>'}`}</div>`:''}
+  </div>
+  <div class="nav"><button class="btn g" onclick="go(-1)" ${sess.i==0?'disabled':''}>◀ 이전</button>
+  <button class="btn" onclick="${sess.i==n-1?'finish()':'go(1)'}">${sess.i==n-1?'결과 보기':'다음 ▶'}</button></div>
+  ${navOpen?navSheet():''}`;
+}
+function navSheet(){
+  return `<div class="ov" onclick="if(event.target==this){navOpen=false;render()}"><div class="sheet">
+  <div class="row" style="justify-content:space-between"><b>문제 번호</b><button class="ib" onclick="navOpen=false;render()">닫기</button></div>
+  <div class="sm">초록=정답 · 빨강=오답 · ★=북마크</div>
+  <div class="grid">${sess.ids.map((id,i)=>{const a=sess.ans[id];return `<button class="cell ${a!=null?(a==QM[id].answer?'ok':'no'):''} ${i==sess.i?'cur':''} ${bm[id]?'bm':''}" onclick="jump(${i})">${i+1}</button>`}).join('')}</div>
+  <button class="btn g" onclick="finish()">결과 보기</button></div></div>`;
+}
+function pick(c){
+  const id=sess.ids[sess.i];if(sess.ans[id]!=null)return;
+  sess.ans[id]=c;
+  if(c==QM[id].answer)delete wrong[id];else wrong[id]=1;
+  sv('cbt_wrong',wrong);saveSess();render();
+}
+function go(d){sess.i=Math.min(Math.max(sess.i+d,0),sess.ids.length-1);editing=false;saveSess();render();scrollTo(0,0)}
+function jump(i){sess.i=i;navOpen=false;editing=false;saveSess();render();scrollTo(0,0)}
+function togBm(){const id=sess.ids[sess.i];bm[id]?delete bm[id]:bm[id]=1;sv('cbt_bm',bm);render()}
+function saveExp(){
+  const id=sess.ids[sess.i],v=$('#exta').value;
+  if(v.trim()===(QM[id].exp||'').trim())delete notes[id];else notes[id]=v;
+  sv('cbt_notes',notes);editing=false;render();
+}
+function goHome(){view='home';render()}
+function finish(){sess.done=true;saveSess();view='result';navOpen=false;render();scrollTo(0,0)}
+
+/* ========= 결과 ========= */
+function result(){
+  const n=sess.ids.length,ok=sess.ids.filter(i=>sess.ans[i]==QM[i].answer).length;
+  const wr=sess.ids.filter(i=>sess.ans[i]!=null&&sess.ans[i]!=QM[i].answer),un=n-Object.keys(sess.ans).length;
+  $('#app').innerHTML=`<div class="bar"><h1>결과</h1><button class="ib" onclick="toggleTheme()">${theme=='dark'?'☀️':'🌙'}</button></div>
+  <div class="card"><div class="big">${ok} / ${n}</div>
+  <div style="text-align:center">정답률 ${Math.round(ok/n*100)}% · 오답 ${wr.length} · 안 푼 문제 ${un}</div></div>
+  ${wr.length?`<button class="btn w" onclick="start(shuffle(${JSON.stringify(wr).replace(/"/g,'&quot;')}))">🔁 틀린 문제 다시 풀기 (${wr.length})</button>`:''}
+  <button class="btn g" onclick="view='quiz';sess.i=0;render()">문제 리뷰하기</button>
+  <button class="btn g" onclick="start(shuffle(sess.ids))">전체 다시 풀기</button>
+  <button class="btn g" onclick="goHome()">홈으로</button>`;
 }
 
-function populateYearSelects() {
-  const yearSelects = ['pdfYear', 'txtYear'];
-  yearSelects.forEach(selId => {
-    const el = document.getElementById(selId);
-    el.innerHTML = '';
-    for (let y = 2026; y >= 2016; y--) {
-      const opt = document.createElement('option');
-      opt.value = String(y);
-      opt.textContent = y + '년';
-      if (y === 2025) opt.selected = true;
-      el.appendChild(opt);
-    }
-  });
+/* ========= 데이터 ========= */
+function impFile(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const d=JSON.parse(r.result);let msg='';
+    const qs=Array.isArray(d)?d:d.questions;
+    if(qs){const ok=qs.filter(q=>q.id&&q.subject&&q.q&&Array.isArray(q.choices)&&q.answer);
+      const m=new Map(extra.map(q=>[q.id,q]));ok.forEach(q=>m.set(q.id,q));extra=[...m.values()];sv('cbt_extra',extra);msg+=`문제 ${ok.length}개 추가. `}
+    if(!Array.isArray(d)){
+      if(d.notes){Object.assign(notes,d.notes);sv('cbt_notes',notes)}
+      if(d.bm){Object.assign(bm,d.bm);sv('cbt_bm',bm)}
+      if(d.wrong){Object.assign(wrong,d.wrong);sv('cbt_wrong',wrong)}
+      msg+='기록 복원 완료.'}
+    build();selSub=null;alert(msg||'불러온 내용이 없습니다.');render();
+  }catch(err){alert('JSON 파일을 읽을 수 없습니다.')}};
+  r.readAsText(f);
+}
+function exportData(){
+  const b=new Blob([JSON.stringify({questions:extra,notes,bm,wrong},null,1)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='cbt-backup.json';a.click();
+}
+function resetAll(){
+  if(!confirm('오답·북마크·이어풀기 기록을 초기화할까요? (풀이 수정 내용은 유지됩니다)'))return;
+  wrong={};bm={};sess=null;['cbt_wrong','cbt_bm','cbt_sess'].forEach(k=>localStorage.removeItem(k));render();
 }
 
-function loadStateFromStorage() {
-  try {
-    const savedQ = localStorage.getItem(STORAGE_KEYS.QUESTIONS);
-    if (savedQ) {
-      const parsed = JSON.parse(savedQ);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        allQuestions = parsed;
-      } else {
-        allQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
-        saveQuestionsToStorage();
-      }
-    } else {
-      allQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
-      saveQuestionsToStorage();
-    }
-
-    const savedP = localStorage.getItem(STORAGE_KEYS.PROGRESS);
-    userProgress = savedP ? JSON.parse(savedP) : {};
-
-    const savedB = localStorage.getItem(STORAGE_KEYS.BOOKMARKS);
-    userBookmarks = savedB ? JSON.parse(savedB) : {};
-  } catch (e) {
-    console.error("Storage load error:", e);
-    allQuestions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
-    userProgress = {};
-    userBookmarks = {};
-  }
+/* ========= 렌더/키보드 ========= */
+function render(){
+  if(view!='home'&&!sess)view='home';
+  ({home,quiz,result})[view]();
 }
-
-function saveQuestionsToStorage() {
-  localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(allQuestions));
-}
-
-function saveProgressToStorage() {
-  localStorage.setItem(STORAGE_KEYS.PROGRESS, JSON.stringify(userProgress));
-}
-
-function saveBookmarksToStorage() {
-  localStorage.setItem(STORAGE_KEYS.BOOKMARKS, JSON.stringify(userBookmarks));
-}
-
-function refreshFilterDropdowns() {
-  const years = [...new Set(allQuestions.map(q => String(q.year)))].sort((a, b) => b.localeCompare(a));
-  const exams = [...new Set(allQuestions.map(q => q.exam))];
-  const subjects = [...new Set(allQuestions.map(q => q.subject))];
-
-  fillSelect('filterYear', '전체 연도', years, v => v + '년');
-  fillSelect('filterExam', '전체 직렬', exams, v => v);
-  fillSelect('filterSubject', '전체 과목', subjects, v => v);
-}
-
-function fillSelect(id, allLabel, values, formatter) {
-  const sel = document.getElementById(id);
-  const prev = sel.value;
-  sel.innerHTML = `<option value="ALL">${allLabel}</option>`;
-  values.forEach(val => {
-    const opt = document.createElement('option');
-    opt.value = val;
-    opt.textContent = formatter(val);
-    sel.appendChild(opt);
-  });
-  if ([...sel.options].some(o => o.value === prev)) {
-    sel.value = prev;
-  }
-}
-
-function applyFilters() {
-  const y = document.getElementById('filterYear').value;
-  const e = document.getElementById('filterExam').value;
-  const s = document.getElementById('filterSubject').value;
-  const st = document.getElementById('filterStatus').value;
-
-  filteredQuestions = allQuestions.filter(q => {
-    if (y !== 'ALL' && String(q.year) !== y) return false;
-    if (e !== 'ALL' && q.exam !== e) return false;
-    if (s !== 'ALL' && q.subject !== s) return false;
-
-    const chosen = userProgress[q.id];
-    if (st === 'WRONG') {
-      if (!chosen || chosen === q.answer) return false;
-    } else if (st === 'UNSOLVED') {
-      if (chosen) return false;
-    } else if (st === 'BOOKMARK') {
-      if (!userBookmarks[q.id]) return false;
-    }
-    return true;
-  });
-
-  if (currentIndex >= filteredQuestions.length) {
-    currentIndex = Math.max(0, filteredQuestions.length - 1);
-  }
-
-  updateStats();
-  renderOmrGrid();
-  renderCurrentQuestion();
-}
-
-function updateStats() {
-  const total = filteredQuestions.length;
-  let solved = 0;
-  let correct = 0;
-  filteredQuestions.forEach(q => {
-    const ans = userProgress[q.id];
-    if (ans) {
-      solved++;
-      if (ans === q.answer) correct++;
-    }
-  });
-  const rate = solved > 0 ? Math.round((correct / solved) * 100) : 0;
-  document.getElementById('statsDisplay').innerHTML =
-    `진행: <strong>${solved} / ${total}</strong> · 정답률: <strong>${rate}%</strong> (${correct}개 정답)`;
-}
-
-function renderCurrentQuestion() {
-  const qTags = document.getElementById('qTags');
-  const qTitle = document.getElementById('qTitle');
-  const qBox = document.getElementById('qBox');
-  const qCode = document.getElementById('qCode');
-  const optionsList = document.getElementById('optionsList');
-  const expBox = document.getElementById('explanationBox');
-  const expEditor = document.getElementById('expEditor');
-  const pageInd = document.getElementById('pageIndicator');
-  const bookmarkBtn = document.getElementById('bookmarkBtn');
-
-  expEditor.classList.remove('visible');
-
-  if (filteredQuestions.length === 0) {
-    qTags.innerHTML = `<span class="tag gray">조건 일치 문항 없음</span>`;
-    qTitle.textContent = "선택한 필터 조건에 해당하는 문제가 없습니다. 필터를 '전체'로 변경하거나 우측 상단 '+ PDF / 문제 추가'로 문제를 등록해 주세요.";
-    qBox.style.display = 'none';
-    qCode.style.display = 'none';
-    optionsList.innerHTML = '';
-    expBox.classList.remove('visible');
-    pageInd.textContent = "0 / 0";
-    document.getElementById('prevBtn').disabled = true;
-    document.getElementById('nextBtn').disabled = true;
-    return;
-  }
-
-  const q = filteredQuestions[currentIndex];
-  const chosen = userProgress[q.id];
-  const isBookmarked = !!userBookmarks[q.id];
-
-  qTags.innerHTML = `
-    <span class="tag">${q.year}년 ${q.exam}</span>
-    <span class="tag">${q.subject}</span>
-    <span class="tag gray">${q.num}번 문항</span>
-  `;
-
-  bookmarkBtn.className = isBookmarked ? 'bookmark-btn active' : 'bookmark-btn';
-  bookmarkBtn.textContent = isBookmarked ? '★ 북마크됨' : '☆ 북마크';
-
-  qTitle.textContent = `${q.num}. ${q.question}`;
-
-  if (q.box && q.box.trim()) {
-    qBox.style.display = 'block';
-    qBox.textContent = q.box;
-  } else {
-    qBox.style.display = 'none';
-  }
-
-  if (q.code && q.code.trim()) {
-    qCode.style.display = 'block';
-    qCode.textContent = q.code;
-  } else {
-    qCode.style.display = 'none';
-  }
-
-  const circleNums = ['①', '②', '③', '④'];
-  optionsList.innerHTML = '';
-  q.options.forEach((optText, idx) => {
-    const optNum = idx + 1;
-    const btn = document.createElement('button');
-    btn.className = 'option-btn';
-
-    if (chosen) {
-      if (q.answer && optNum === q.answer) {
-        btn.classList.add('correct');
-      } else if (optNum === chosen && q.answer && chosen !== q.answer) {
-        btn.classList.add('wrong');
-      } else if (optNum === chosen && !q.answer) {
-        btn.classList.add('correct');
-      }
-    }
-
-    btn.innerHTML = `<span class="opt-num">${circleNums[idx] || optNum}</span><span>${escapeHtml(optText)}</span>`;
-    btn.onclick = () => selectOption(optNum);
-    optionsList.appendChild(btn);
-  });
-
-  if (chosen) {
-    showExplanationPanel(q, chosen);
-  } else {
-    expBox.classList.remove('visible');
-  }
-
-  pageInd.textContent = `${currentIndex + 1} / ${filteredQuestions.length}`;
-  document.getElementById('prevBtn').disabled = currentIndex === 0;
-  document.getElementById('nextBtn').disabled = currentIndex === filteredQuestions.length - 1;
-}
-
-function selectOption(optNum) {
-  if (filteredQuestions.length === 0) return;
-  const q = filteredQuestions[currentIndex];
-  userProgress[q.id] = optNum;
-  saveProgressToStorage();
-  updateStats();
-  renderOmrGrid();
-  renderCurrentQuestion();
-}
-
-function toggleShowAnswer() {
-  if (filteredQuestions.length === 0) return;
-  const q = filteredQuestions[currentIndex];
-  const expBox = document.getElementById('explanationBox');
-  if (expBox.classList.contains('visible') && !userProgress[q.id]) {
-    expBox.classList.remove('visible');
-  } else {
-    showExplanationPanel(q, userProgress[q.id] || null);
-  }
-}
-
-function showExplanationPanel(q, chosen) {
-  const expBox = document.getElementById('explanationBox');
-  const expStatus = document.getElementById('expStatus');
-  const expContent = document.getElementById('expContent');
-  const circleNums = ['①', '②', '③', '④'];
-
-  expBox.classList.add('visible');
-
-  if (!q.answer) {
-    expStatus.className = 'exp-status info';
-    expStatus.textContent = `정답 미등록 문항 (우측 '풀이 편집' 또는 회차 관리에서 정답을 지정할 수 있습니다)`;
-  } else if (!chosen) {
-    expStatus.className = 'exp-status info';
-    expStatus.textContent = `정답: ${circleNums[q.answer - 1]} (${q.answer}번)`;
-  } else if (chosen === q.answer) {
-    expStatus.className = 'exp-status ok';
-    expStatus.textContent = `정답입니다! (${circleNums[q.answer - 1]})`;
-  } else {
-    expStatus.className = 'exp-status no';
-    expStatus.textContent = `오답입니다. 선택: ${circleNums[chosen - 1]} / 정답: ${circleNums[q.answer - 1]}`;
-  }
-
-  expContent.textContent = q.explanation && q.explanation.trim()
-    ? q.explanation
-    : "등록된 해설이 없습니다. 우측 상단 [풀이 편집 / 내 메모 추가] 버튼을 눌러 나만의 풀이를 작성해 보세요.";
-}
-
-function toggleExpEditor(forceState) {
-  if (filteredQuestions.length === 0) return;
-  const q = filteredQuestions[currentIndex];
-  const editor = document.getElementById('expEditor');
-  const textarea = document.getElementById('expTextarea');
-  const shouldOpen = typeof forceState === 'boolean' ? forceState : !editor.classList.contains('visible');
-
-  if (shouldOpen) {
-    textarea.value = q.explanation || '';
-    editor.classList.add('visible');
-    textarea.focus();
-  } else {
-    editor.classList.remove('visible');
-  }
-}
-
-function appendMyNoteBlock() {
-  const textarea = document.getElementById('expTextarea');
-  const prefix = textarea.value.trim() ? textarea.value.trim() + "
-
-" : "";
-  textarea.value = prefix + "────────────────────
-[내 풀이 / 암기팁]
-• ";
-  textarea.focus();
-}
-
-function saveEditedExplanation() {
-  if (filteredQuestions.length === 0) return;
-  const q = filteredQuestions[currentIndex];
-  const newExp = document.getElementById('expTextarea').value;
-
-  const target = allQuestions.find(item => item.id === q.id);
-  if (target) {
-    target.explanation = newExp;
-    saveQuestionsToStorage();
-  }
-  q.explanation = newExp;
-  document.getElementById('expContent').textContent = newExp.trim()
-    ? newExp
-    : "등록된 해설이 없습니다. 우측 상단 [풀이 편집 / 내 메모 추가] 버튼을 눌러 나만의 풀이를 작성해 보세요.";
-  toggleExpEditor(false);
-}
-
-function toggleBookmark() {
-  if (filteredQuestions.length === 0) return;
-  const q = filteredQuestions[currentIndex];
-  if (userBookmarks[q.id]) {
-    delete userBookmarks[q.id];
-  } else {
-    userBookmarks[q.id] = true;
-  }
-  saveBookmarksToStorage();
-  renderOmrGrid();
-  renderCurrentQuestion();
-}
-
-function moveQuestion(delta) {
-  const next = currentIndex + delta;
-  if (next >= 0 && next < filteredQuestions.length) {
-    currentIndex = next;
-    renderOmrGrid();
-    renderCurrentQuestion();
-  }
-}
-
-function renderOmrGrid() {
-  const grid = document.getElementById('omrGrid');
-  grid.innerHTML = '';
-  filteredQuestions.forEach((q, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'omr-btn';
-    btn.textContent = q.num;
-
-    if (idx === currentIndex) btn.classList.add('current');
-    if (userBookmarks[q.id]) btn.classList.add('bookmarked');
-
-    const chosen = userProgress[q.id];
-    if (chosen) {
-      if (!q.answer || chosen === q.answer) {
-        btn.classList.add('solved-ok');
-      } else {
-        btn.classList.add('solved-no');
-      }
-    }
-
-    btn.onclick = () => {
-      currentIndex = idx;
-      renderOmrGrid();
-      renderCurrentQuestion();
-    };
-    grid.appendChild(btn);
-  });
-}
-
-function resetCurrentProgress() {
-  if (filteredQuestions.length === 0) return;
-  if (!confirm("현재 필터에 표시된 문제들의 풀이 기록을 초기화할까요? (등록된 문제와 해설은 유지됩니다)")) return;
-  filteredQuestions.forEach(q => {
-    delete userProgress[q.id];
-  });
-  saveProgressToStorage();
-  updateStats();
-  renderOmrGrid();
-  renderCurrentQuestion();
-}
-
-function setupKeyboardShortcuts() {
-  document.addEventListener('keydown', (e) => {
-    if (document.getElementById('manageModal').classList.contains('open')) return;
-    if (['TEXTAREA', 'INPUT', 'SELECT'].includes(document.activeElement.tagName)) return;
-
-    if (['1', '2', '3', '4'].includes(e.key)) {
-      selectOption(Number(e.key));
-    } else if (e.key === 'ArrowLeft') {
-      moveQuestion(-1);
-    } else if (e.key === 'ArrowRight') {
-      moveQuestion(1);
-    }
-  });
-}
-
-/* ================= MODAL & PDF PARSER ================= */
-
-function openManageModal(tab) {
-  document.getElementById('manageModal').classList.add('open');
-  hideModalBanner();
-  switchModalTab(tab || 'pdf');
-}
-
-function closeManageModal() {
-  document.getElementById('manageModal').classList.remove('open');
-}
-
-function switchModalTab(tab) {
-  ['pdf', 'text', 'sets'].forEach(t => {
-    document.getElementById('panel' + capitalize(t)).style.display = (t === tab) ? 'flex' : 'none';
-    document.getElementById('tab' + capitalize(t) + 'Btn').classList.toggle('active', t === tab);
-  });
-  if (tab === 'sets') renderSetsManager();
-}
-
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
-function showModalBanner(type, msg) {
-  const b = document.getElementById('modalBanner');
-  b.className = 'status-banner ' + type;
-  b.textContent = msg;
-}
-
-function hideModalBanner() {
-  const b = document.getElementById('modalBanner');
-  b.className = 'status-banner';
-}
-
-function autoDetectMetaFromFilename(filename) {
-  const yearMatch = filename.match(/(201[6-9]|202[0-6])/);
-  if (yearMatch) document.getElementById('pdfYear').value = yearMatch[1];
-
-  if (filename.includes('국가')) document.getElementById('pdfExam').value = '국가직';
-  else if (filename.includes('지방')) document.getElementById('pdfExam').value = '지방직';
-  else if (filename.includes('군무원')) document.getElementById('pdfExam').value = '군무원';
-
-  if (filename.includes('보호') || filename.includes('보안')) document.getElementById('pdfSubject').value = '정보보호론';
-  else if (filename.includes('컴퓨터') || filename.includes('컴일')) document.getElementById('pdfSubject').value = '컴퓨터일반';
-}
-
-async function extractTextFromPdfFile(file) {
-  if (!window.pdfjsLib) {
-    throw new Error("PDF 분석 라이브러리(PDF.js)가 로드되지 않았습니다. 인터넷 연결을 확인하거나 '텍스트 직접 붙여넣기' 탭을 이용해 주세요.");
-  }
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let fullText = '';
-
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    const page = await pdf.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 1.0 });
-    const midX = viewport.width / 2;
-    const textContent = await page.getTextContent();
-
-    // Detect if 2-column layout (significant items on both left and right halves)
-    let leftCount = 0;
-    let rightCount = 0;
-    const items = textContent.items.map(it => ({
-      str: it.str,
-      x: it.transform[4],
-      y: it.transform[5]
-    })).filter(it => it.str.trim().length > 0);
-
-    items.forEach(it => {
-      if (it.x < midX - 20) leftCount++;
-      else if (it.x > midX + 20) rightCount++;
-    });
-
-    const isTwoColumn = leftCount > 15 && rightCount > 15;
-
-    const sortAndJoin = (arr) => {
-      arr.sort((a, b) => {
-        if (Math.abs(b.y - a.y) > 4.5) return b.y - a.y;
-        return a.x - b.x;
-      });
-      let pageStr = '';
-      let lastY = null;
-      arr.forEach(it => {
-        if (lastY !== null && Math.abs(lastY - it.y) > 5.5) {
-          pageStr += '
-';
-        } else if (lastY !== null) {
-          pageStr += ' ';
-        }
-        pageStr += it.str;
-        lastY = it.y;
-      });
-      return pageStr;
-    };
-
-    if (isTwoColumn) {
-      const leftItems = items.filter(it => it.x < midX);
-      const rightItems = items.filter(it => it.x >= midX);
-      fullText += sortAndJoin(leftItems) + '
-' + sortAndJoin(rightItems) + '
-';
-    } else {
-      fullText += sortAndJoin(items) + '
-';
-    }
-  }
-  return fullText;
-}
-
-async function handleQuestionPdfUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  autoDetectMetaFromFilename(file.name);
-  showModalBanner('info', `'${file.name}' 텍스트 분석 중...`);
-
-  try {
-    const extracted = await extractTextFromPdfFile(file);
-    const questions = parseQuestionsFromText(extracted);
-
-    if (questions.length === 0) {
-      showModalBanner('err', '텍스트 기반 문제를 찾지 못했습니다. 스캔(이미지) PDF이거나 문항 번호(1. ~ 20.) 형식이 다를 수 있습니다.');
-      document.getElementById('pdfPreviewWrapper').style.display = 'none';
-      return;
-    }
-
-    parsedPdfCandidates = questions;
-    applyManualAnswersToPreview();
-    renderPdfPreview();
-    showModalBanner('ok', `총 ${questions.length}개 문항이 자동 추출되었습니다! 아래 미리보기에서 정답을 확인한 뒤 등록 버튼을 누르세요.`);
-  } catch (err) {
-    console.error(err);
-    showModalBanner('err', 'PDF 읽기 오류: ' + err.message);
-  }
-}
-
-async function handleAnswerPdfUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  try {
-    const extracted = await extractTextFromPdfFile(file);
-    const ansMap = parseAnswerKeyFromText(extracted);
-    const keys = Object.keys(ansMap);
-
-    if (keys.length === 0) {
-      showModalBanner('err', '정답표 PDF에서 문항별 정답(①~④ 또는 1~4)을 찾지 못했습니다.');
-      return;
-    }
-
-    // Fill manual input box for transparency
-    const maxNum = Math.max(...keys.map(Number));
-    const ordered = [];
-    for (let i = 1; i <= maxNum; i++) {
-      ordered.push(ansMap[i] || '');
-    }
-    document.getElementById('pdfManualAnswers').value = ordered.join(', ');
-
-    if (parsedPdfCandidates.length > 0) {
-      parsedPdfCandidates.forEach(q => {
-        if (ansMap[q.num]) q.answer = ansMap[q.num];
-      });
-      renderPdfPreview();
-    }
-    showModalBanner('ok', `정답표 PDF에서 ${keys.length}개 문항 정답을 추출해 매핑했습니다.`);
-  } catch (err) {
-    showModalBanner('err', '정답 PDF 읽기 오류: ' + err.message);
-  }
-}
-
-function parseAnswerKeyFromText(text) {
-  const circleToNum = { '①': 1, '②': 2, '③': 3, '④': 4 };
-  const map = {};
-
-  // Pattern 1: "1 ②" or "1. 2" or "01 ③"
-  const pairRegex = /(?:^|\s|표)(\d{1,2})\s*[.)]?\s*([①②③④1-4])(?=\s|$)/g;
-  let m;
-  while ((m = pairRegex.exec(text)) !== null) {
-    const qNum = Number(m[1]);
-    if (qNum >= 1 && qNum <= 40) {
-      const rawAns = m[2];
-      map[qNum] = circleToNum[rawAns] || Number(rawAns);
-    }
-  }
-  return map;
-}
-
-function parseAnswerSequence(str) {
-  if (!str || !str.trim()) return [];
-  const circleToNum = { '①': 1, '②': 2, '③': 3, '④': 4 };
-  const tokens = str.match(/[①②③④1-4]/g) || [];
-  return tokens.map(t => circleToNum[t] || Number(t));
-}
-
-function applyManualAnswersToPreview() {
-  if (parsedPdfCandidates.length === 0) return;
-  const seq = parseAnswerSequence(document.getElementById('pdfManualAnswers').value);
-  if (seq.length === 0) return;
-
-  parsedPdfCandidates.forEach((q, idx) => {
-    if (seq[idx]) q.answer = seq[idx];
-  });
-  renderPdfPreview();
-}
-
-function parseQuestionsFromText(raw) {
-  // Normalize whitespace while preserving line breaks
-  let text = raw
-    .replace(//g, '')
-    .replace(/[ 	]+/g, ' ')
-    .replace(/
-{3,}/g, '
-
-');
-
-  // Remove common exam header/footer noise
-  text = text.replace(/국가공무원.*공개경쟁채용.*?
-/g, '')
-             .replace(/지방공무원.*공개경쟁임용.*?
-/g, '')
-             .replace(/컴퓨터일반|정보보호론/g, (m, offset) => offset < 80 ? '' : m);
-
-  // Ensure question numbers start cleanly on new lines: "1. ", "2. " ... "25. "
-  text = text.replace(/(?:^|
-)\s*(\d{1,2})\.\s+/g, '
-<<<Q_$1>>> ');
-
-  const blocks = text.split('<<<Q_').slice(1);
-  const results = [];
-
-  blocks.forEach(block => {
-    const headerMatch = block.match(/^(\d{1,2})>>>\s*([\s\S]*)$/);
-    if (!headerMatch) return;
-
-    const num = Number(headerMatch[1]);
-    let body = headerMatch[2].trim();
-
-    // Split options ① ② ③ ④
-    const optIdx1 = body.indexOf('①');
-    const optIdx2 = body.indexOf('②');
-    const optIdx3 = body.indexOf('③');
-    const optIdx4 = body.indexOf('④');
-
-    if (optIdx1 === -1 || optIdx2 === -1 || optIdx3 === -1 || optIdx4 === -1) {
-      return; // Skip non-4-choice blocks
-    }
-
-    const stemRaw = body.slice(0, optIdx1).trim();
-    const o1 = body.slice(optIdx1 + 1, optIdx2).trim();
-    const o2 = body.slice(optIdx2 + 1, optIdx3).trim();
-    const o3 = body.slice(optIdx3 + 1, optIdx4).trim();
-    // Trim trailing page numbers from option 4
-    let o4 = body.slice(optIdx4 + 1).replace(/
-\s*-\s*\d+\s*-\s*$/, '').trim();
-
-    // Separate stem vs <보기> / code block if multi-line
-    let questionText = stemRaw;
-    let boxText = '';
-    const firstNewline = stemRaw.indexOf('
-');
-    if (firstNewline !== -1) {
-      const firstLine = stemRaw.slice(0, firstNewline).trim();
-      const restLines = stemRaw.slice(firstNewline + 1).trim();
-      if (firstLine.endsWith('?') || firstLine.endsWith('것은?') || firstLine.endsWith('고르면?')) {
-        questionText = firstLine;
-        boxText = restLines;
-      }
-    }
-
-    results.push({
-      num,
-      question: questionText,
-      box: boxText,
-      options: [o1, o2, o3, o4],
-      answer: 0,
-      explanation: ''
-    });
-  });
-
-  return results;
-}
-
-function renderPdfPreview() {
-  const wrapper = document.getElementById('pdfPreviewWrapper');
-  const list = document.getElementById('pdfPreviewList');
-  const countLabel = document.getElementById('pdfPreviewCount');
-
-  if (parsedPdfCandidates.length === 0) {
-    wrapper.style.display = 'none';
-    return;
-  }
-
-  wrapper.style.display = 'flex';
-  countLabel.textContent = `추출된 문제 미리보기 (${parsedPdfCandidates.length}문항)`;
-  list.innerHTML = '';
-
-  const circleNums = ['①', '②', '③', '④'];
-  parsedPdfCandidates.forEach((q, idx) => {
-    const item = document.createElement('div');
-    item.className = 'preview-item';
-
-    const chipsHtml = [1, 2, 3, 4].map(n =>
-      `<button type="button" class="ans-chip ${q.answer === n ? 'selected' : ''}" onclick="setCandidateAnswer(${idx}, ${n})">${circleNums[n - 1]}</button>`
-    ).join('');
-
-    item.innerHTML = `
-      <div style="font-weight:700; margin-bottom:4px;">${q.num}. ${escapeHtml(q.question)}</div>
-      <div class="hint-text" style="margin-bottom:4px;">
-        ① ${escapeHtml(q.options[0])} / ② ${escapeHtml(q.options[1])} / ③ ${escapeHtml(q.options[2])} / ④ ${escapeHtml(q.options[3])}
-      </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:0.78rem; font-weight:700;">정답 지정:</span>
-        <div class="ans-selector">${chipsHtml}</div>
-      </div>
-    `;
-    list.appendChild(item);
-  });
-}
-
-function setCandidateAnswer(idx, ansNum) {
-  if (parsedPdfCandidates[idx]) {
-    parsedPdfCandidates[idx].answer = ansNum;
-    renderPdfPreview();
-  }
-}
-
-function commitParsedQuestions() {
-  if (parsedPdfCandidates.length === 0) return;
-
-  const year = document.getElementById('pdfYear').value;
-  const exam = document.getElementById('pdfExam').value;
-  const subject = document.getElementById('pdfSubject').value;
-
-  registerQuestionBatch(year, exam, subject, parsedPdfCandidates);
-
-  // Switch filter automatically to the newly added set
-  refreshFilterDropdowns();
-  document.getElementById('filterYear').value = year;
-  document.getElementById('filterExam').value = exam;
-  document.getElementById('filterSubject').value = subject;
-  document.getElementById('filterStatus').value = 'ALL';
-  currentIndex = 0;
-  applyFilters();
-  closeManageModal();
-}
-
-function parseAndRegisterRawText() {
-  const raw = document.getElementById('rawTextInput').value;
-  const ansSeq = parseAnswerSequence(document.getElementById('rawTextAnswers').value);
-  const parsed = parseQuestionsFromText(raw);
-
-  if (parsed.length === 0) {
-    showModalBanner('err', '문제를 인식하지 못했습니다. "1. 문제내용"과 "① ② ③ ④" 형식을 확인해 주세요.');
-    return;
-  }
-
-  parsed.forEach((q, idx) => {
-    if (ansSeq[idx]) q.answer = ansSeq[idx];
-  });
-
-  const year = document.getElementById('txtYear').value;
-  const exam = document.getElementById('txtExam').value;
-  const subject = document.getElementById('txtSubject').value;
-
-  registerQuestionBatch(year, exam, subject, parsed);
-
-  refreshFilterDropdowns();
-  document.getElementById('filterYear').value = year;
-  document.getElementById('filterExam').value = exam;
-  document.getElementById('filterSubject').value = subject;
-  document.getElementById('filterStatus').value = 'ALL';
-  currentIndex = 0;
-  applyFilters();
-  closeManageModal();
-}
-
-function registerQuestionBatch(year, exam, subject, items) {
-  const prefix = `${year}_${exam}_${subject}_`;
-  // Remove existing questions with same year/exam/subject/num to prevent duplicates
-  const incomingNums = new Set(items.map(it => it.num));
-  allQuestions = allQuestions.filter(q => !(String(q.year) === String(year) && q.exam === exam && q.subject === subject && incomingNums.has(q.num)));
-
-  items.forEach(it => {
-    allQuestions.push({
-      id: prefix + it.num,
-      year: String(year),
-      exam,
-      subject,
-      num: it.num,
-      question: it.question,
-      box: it.box || '',
-      code: it.code || '',
-      options: it.options,
-      answer: it.answer || 0,
-      explanation: it.explanation || ''
-    });
-  });
-
-  // Sort neatly by year desc, exam, subject, num asc
-  allQuestions.sort((a, b) => {
-    if (b.year !== a.year) return String(b.year).localeCompare(String(a.year));
-    if (a.exam !== b.exam) return a.exam.localeCompare(b.exam);
-    if (a.subject !== b.subject) return a.subject.localeCompare(b.subject);
-    return a.num - b.num;
-  });
-
-  saveQuestionsToStorage();
-}
-
-function renderSetsManager() {
-  const container = document.getElementById('setsListContainer');
-  const groups = {};
-
-  allQuestions.forEach(q => {
-    const key = `${q.year}|${q.exam}|${q.subject}`;
-    if (!groups[key]) groups[key] = { year: q.year, exam: q.exam, subject: q.subject, count: 0 };
-    groups[key].count++;
-  });
-
-  const list = Object.values(groups);
-  if (list.length === 0) {
-    container.innerHTML = `<div class="hint-text">등록된 회차가 없습니다.</div>`;
-    return;
-  }
-
-  container.innerHTML = '';
-  list.forEach(g => {
-    const row = document.createElement('div');
-    row.className = 'set-item';
-    row.innerHTML = `
-      <div>
-        <strong>${g.year}년 ${g.exam} · ${g.subject}</strong>
-        <span class="hint-text" style="margin-left:8px;">(${g.count}문항)</span>
-      </div>
-      <div style="display:flex; gap:6px;">
-        <button class="btn-outline" style="padding:4px 10px; font-size:0.8rem;" onclick="jumpToSet('${g.year}','${g.exam}','${g.subject}')">바로 풀기</button>
-        <button class="btn-danger" style="padding:4px 10px; font-size:0.8rem;" onclick="deleteSet('${g.year}','${g.exam}','${g.subject}')">삭제</button>
-      </div>
-    `;
-    container.appendChild(row);
-  });
-}
-
-function jumpToSet(year, exam, subject) {
-  document.getElementById('filterYear').value = year;
-  document.getElementById('filterExam').value = exam;
-  document.getElementById('filterSubject').value = subject;
-  document.getElementById('filterStatus').value = 'ALL';
-  currentIndex = 0;
-  applyFilters();
-  closeManageModal();
-}
-
-function deleteSet(year, exam, subject) {
-  if (!confirm(`${year}년 ${exam} ${subject} 문항 전체를 삭제할까요?`)) return;
-  allQuestions = allQuestions.filter(q => !(String(q.year) === String(year) && q.exam === exam && q.subject === subject));
-  saveQuestionsToStorage();
-  refreshFilterDropdowns();
-  applyFilters();
-  renderSetsManager();
-}
-
-function exportBackupJson() {
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    questions: allQuestions,
-    progress: userProgress,
-    bookmarks: userBookmarks
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `전산cbt_백업_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function importBackupJson(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (Array.isArray(data.questions)) {
-        allQuestions = data.questions;
-        userProgress = data.progress || {};
-        userBookmarks = data.bookmarks || {};
-        saveQuestionsToStorage();
-        saveProgressToStorage();
-        saveBookmarksToStorage();
-        refreshFilterDropdowns();
-        applyFilters();
-        renderSetsManager();
-        showModalBanner('ok', `백업 파일 복원 완료 (${allQuestions.length}문항)`);
-      } else {
-        showModalBanner('err', '올바른 백업 JSON 형식이 아닙니다.');
-      }
-    } catch (err) {
-      showModalBanner('err', 'JSON 파싱 오류: ' + err.message);
-    }
-  };
-  reader.readAsText(file);
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-// Initialize immediately on DOM ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
-}
+document.addEventListener('keydown',e=>{
+  if(view!='quiz'||editing||/TEXTAREA|INPUT/.test(e.target.tagName))return;
+  if(/^[1-6]$/.test(e.key)&&+e.key<=QM[sess.ids[sess.i]].choices.length)pick(+e.key);
+  else if(e.key=='ArrowRight'&&sess.i<sess.ids.length-1)go(1);
+  else if(e.key=='ArrowLeft')go(-1);
+});
+render();
 </script>
 </body>
 </html>
